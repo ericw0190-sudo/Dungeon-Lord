@@ -7016,7 +7016,10 @@ function drawRaceSelect() {
       const skY = nameY + 60 + race.traits.length * 16 + 14;
       ctx.fillStyle = '#6688aa'; ctx.font = '6px "Press Start 2P"';
       ctx.fillText('— SKILLS —', cx + RS_CARD_W/2, skY);
-      race.startSkills.forEach((sk, si) => {
+      const displaySkills = RS_KEYS[i] === 'goblin'
+        ? [...race.startSkills, 'goblinFlurry']
+        : race.startSkills;
+      displaySkills.forEach((sk, si) => {
         const skill = SKILLS[sk];
         if (!skill) return;
         ctx.fillStyle = '#88bbff'; ctx.font = '5px "Press Start 2P"';
