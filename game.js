@@ -480,7 +480,7 @@ const SKILLS = {
     use() {},
   },
   goblinEscape: {
-    name: 'Goblin Escape', shortName: 'ESC',
+    name: 'Goblin Maneuver', shortName: 'MNV',
     desc: 'Leap 3 tiles toward mouse. Invincible while leaping. +20% SPD for 0.5s after landing. 5s CD.',
     cooldown: 5, rank: 'base',
     tips: [
@@ -3223,6 +3223,7 @@ function minionShopItems() {
     { key:'goblinFarmer', name:'MUSHROOM FARMER', type:'minion',
       desc:'Place on Soil tiles. Generates food passively. Flees enemies. Very fragile. 150s respawn.',
       cost: MINION_TYPES.goblinFarmer.baseCost, food: MINION_TYPES.goblinFarmer.foodPerLevel,
+      foodGen: MINION_TYPES.goblinFarmer.foodGenAtLevel(1),
       have: minionInventory.filter(m=>m.type==='goblinFarmer').length + placedMinions.filter(m=>m.type==='goblinFarmer').length },
     { key:'goblinWarrior', name:'GOBLIN WARRIOR', type:'minion',
       desc:'Armored tank. High HP and DEF. Slow melee fighter.',
@@ -5764,8 +5765,130 @@ function minionContextClick(mx, my) {
   if (!inR(mx,my, px,py, pw,ph)) minionContext = null;
 }
 
+// ── Minion tooltip panel (shared by shop + inventory) ─────────
+function drawMinionTooltip(key, level) {
+  const cfg  = MINION_TYPES[key];
+  const msr  = MINION_SPRS[key];
+  const stats = cfg.statsAtLevel(level);
+  const col  = cfg.accentColor || cfg.color;
+  const TTX  = SX + SW + 8;
+  const TTW  = CW - TTX - 8;
+  const TTY  = SY - 10;
+  const TTH  = SH + 20;
+  const mid  = TTX + TTW / 2;
+  const PAD  = 10;
+
+  ctx.fillStyle = '#040209';
+  ctx.fillRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col; ctx.lineWidth = 2;
+  ctx.strokeRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col+'33'; ctx.lineWidth = 1;
+  ctx.strokeRect(TTX+3, TTY+3, TTW-6, TTH-6);
+  ctx.fillStyle = col+'22';
+  ctx.fillRect(TTX+2, TTY+2, TTW-4, 36);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(TTX+4, TTY+4, TTW-8, TTH-8); ctx.clip();
+
+  // Sprite
+  sprS(msr.s, msr.c, TTX + TTW/2 - 16, TTY + 6, 4);
+
+  // Name (word-wrapped, centered below sprite)
+  let cy = TTY + 44;
+  ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillStyle = col;
+  const nameWords = cfg.name.split(' ');
+  let nameLine = '';
+  for (const w of nameWords) {
+    const test = nameLine + (nameLine ? ' ' : '') + w;
+    if (ctx.measureText(test).width > TTW - PAD*2) {
+      ctx.fillText(nameLine, mid, cy); nameLine = w; cy += 10;
+    } else { nameLine = test; }
+  }
+  ctx.fillText(nameLine, mid, cy); cy += 12;
+
+  // Role badge
+  const ROLES = {
+    skeleton:     ['UNDEAD',  '#18183a', '#8888cc'],
+    goblin:       ['MELEE',   '#0e2010', '#55cc66'],
+    goblinFarmer: ['FARMER',  '#241c00', '#ccaa22'],
+    goblinWarrior:['TANK',    '#12122e', '#6699dd'],
+    goblinArcher: ['RANGED',  '#0a200a', '#44cc44'],
+    goblinMage:   ['MAGE',    '#180a28', '#bb66ff'],
+    giantSpider:  ['AMBUSH',  '#181810', '#aaaa44'],
+    mimic:        ['LURE',    '#281600', '#ffaa22'],
+  };
+  const [roleLabel, roleBg, roleFg] = ROLES[key] || ['MINION','#111','#aaa'];
+  const bw = 58, bh = 13;
+  ctx.fillStyle = roleBg; ctx.fillRect(mid-bw/2, cy-10, bw, bh);
+  ctx.strokeStyle = roleFg; ctx.lineWidth = 1; ctx.strokeRect(mid-bw/2, cy-10, bw, bh);
+  ctx.font = '5px "Press Start 2P"'; ctx.fillStyle = roleFg;
+  ctx.fillText(roleLabel, mid, cy-1); cy += 8;
+
+  // Divider
+  ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 8;
+
+  // Stats
+  ctx.textAlign = 'left'; ctx.font = '5px "Press Start 2P"';
+  const sx2 = TTX + PAD;
+  ctx.fillStyle = '#88ff88'; ctx.fillText('HP:  ' + stats.hp, sx2, cy); cy += 9;
+  if (stats.atk  > 0) { ctx.fillStyle = '#ff9966'; ctx.fillText('ATK: ' + stats.atk,   sx2, cy); cy += 9; }
+  if (stats.def  > 0) { ctx.fillStyle = '#88aaff'; ctx.fillText('DEF: ' + stats.def,   sx2, cy); cy += 9; }
+  ctx.fillStyle = '#88ddff'; ctx.fillText('SPD: ' + stats.speed, sx2, cy); cy += 9;
+  if (stats.detectRng > 0) { ctx.fillStyle = '#ddcc88'; ctx.fillText('RNG: ' + stats.detectRng + 'px', sx2, cy); cy += 9; }
+
+  // Divider
+  cy += 2; ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
+
+  // Bullet tips
+  const TIPS = {
+    skeleton:     ['Very fragile — best used in large numbers.','Attacks any adventurer in range on sight.','10 second respawn.'],
+    goblin:       ['Fast melee fighter. Low HP but quick.','Attacks on sight.','Goblin race players get 50% off.','60 second respawn.'],
+    goblinFarmer: ['Must be placed on a Soil tile.','Generates food passively every minute.','Does not attack — runs from danger.','No food upkeep cost.','150 second respawn.'],
+    goblinWarrior:['Frontline tank with high HP and armor.','DEF stat reduces damage from each hit.','Slow but soaks a lot of punishment.','75 second respawn.'],
+    goblinArcher: ['Fires poison arrows every 2–3 seconds.','Poison deals damage over time.','Leaps away when enemies get too close.','50 second respawn.'],
+    goblinMage:   ['Launches firebolts every 1.5 seconds.','Firebolt applies Burn: ongoing fire damage.','Backs away from nearby enemies.','65 second respawn.'],
+    giantSpider:  ['Bites enemies up close for direct damage.','Spits webs at distant enemies.','Web slows targets 50% for 3 seconds.','90 second respawn.'],
+    mimic:        ['Disguises as a treasure chest.','Lures adventurers close before attacking.','Works great near traps or chokepoints.','120 second respawn.'],
+  };
+  const tips = TIPS[key] || [];
+  const lineW = TTW - PAD*2 - 9;
+  const textX = TTX + PAD + 8;
+  const dotX  = TTX + PAD;
+  for (const tip of tips) {
+    ctx.fillStyle = col; ctx.fillRect(dotX, cy-4, 4, 4);
+    const words = tip.split(' ');
+    let line = '', ty = cy, first = true;
+    for (const w of words) {
+      const test = line + (line ? ' ' : '') + w;
+      if (ctx.measureText(test).width > lineW) {
+        ctx.fillStyle = first ? '#ddeeff' : '#99aabb';
+        ctx.fillText(line, textX, ty); line = w; ty += 10; first = false;
+      } else { line = test; }
+    }
+    ctx.fillStyle = first ? '#ddeeff' : '#99aabb';
+    if (line) ctx.fillText(line, textX, ty);
+    cy = ty + 13;
+  }
+
+  // Food footer
+  cy += 2; ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
+  ctx.font = '5px "Press Start 2P"';
+  if (key === 'goblinFarmer') {
+    const gen = cfg.foodGenAtLevel(level);
+    ctx.fillStyle = '#55dd88'; ctx.fillText('+'+gen+' food/min  No upkeep', TTX+PAD, cy);
+  } else {
+    const upkeep = level * cfg.foodPerLevel;
+    ctx.fillStyle = upkeep === 0 ? '#99aa99' : '#ff9944';
+    ctx.fillText('Food upkeep: '+(upkeep === 0 ? '0' : upkeep)+'/min', TTX+PAD, cy);
+  }
+
+  ctx.restore();
+  ctx.textAlign = 'left';
+}
+
 // ── Inventory: Minions tab ────────────────────────────────────
 function drawInventoryMinions() {
+  let minionTip = null;
   const INV_VIEW_H = SH - 70;
   // Compute groups
   const groups = {};
@@ -5794,6 +5917,7 @@ function drawInventoryMinions() {
       const msr = MINION_SPRS[grp.type];
       const active = placeMode === 'minion_'+grp.type;
       const iHov = inR(mouse.x,smy, SX+8,iy, SW-16,74);
+      if (iHov) minionTip = { key: grp.type, level: grp.level };
       ctx.fillStyle = iHov?'#111800':'#0a1000'; ctx.fillRect(SX+8,iy,SW-16,74);
       ctx.strokeStyle = active?cfg.accentColor:'#1a2800'; ctx.lineWidth = active?2:1;
       ctx.strokeRect(SX+8,iy,SW-16,74);
@@ -5858,6 +5982,7 @@ function drawInventoryMinions() {
     ctx.fillStyle='#1a2800'; ctx.fillRect(SX+SW-8,SY+70+2,5,trackH);
     ctx.fillStyle='#446633'; ctx.fillRect(SX+SW-8,thumbY,5,thumbH);
   }
+  if (minionTip) drawMinionTooltip(minionTip.key, minionTip.level);
 }
 
 // ── Inventory: Dungeon tab ─────────────────────────────────────
@@ -6031,18 +6156,27 @@ function drawShop() {
   ctx.beginPath(); ctx.rect(SX+8, SY+70, SW-16, SHOP_VIEW_H); ctx.clip();
   ctx.translate(0, -shopScrollY);
   let iy = SY + 76;
+  let minionTipKey = null;
   for (const item of items) {
     const hasFood = item.food !== undefined;
     const rowH = hasFood ? 94 : 80;
     const iHov=inR(mouse.x,smy, SX+8,iy, SW-16,rowH);
+    if (iHov && shopTab === 'minions' && item.key) minionTipKey = item.key;
     ctx.fillStyle=iHov?'#1a1030':'#120820'; ctx.fillRect(SX+8,iy,SW-16,rowH);
     ctx.strokeStyle='#2a1848'; ctx.lineWidth=1; ctx.strokeRect(SX+8,iy,SW-16,rowH);
     ctx.fillStyle='#ffffff'; ctx.font='8px "Press Start 2P"'; ctx.fillText(item.name, SX+20, iy+18);
     ctx.fillStyle='#9988aa'; ctx.font='6px "Press Start 2P"'; ctx.fillText(item.desc, SX+20, iy+32);
     ctx.fillStyle='#ffd700'; ctx.font='7px "Press Start 2P"'; ctx.fillText('Cost: '+item.cost+' coins', SX+20, iy+47);
     if (hasFood) {
-      const foodStr = item.food === 0 ? 'Food: Free' : 'Food: '+item.food+'/min per level';
-      ctx.fillStyle = item.food === 0 ? '#55dd88' : '#ff9944';
+      let foodStr, foodCol;
+      if (item.foodGen !== undefined) {
+        foodStr = '+'+item.foodGen+' food/min (scales per level)'; foodCol = '#55dd88';
+      } else if (item.food === 0) {
+        foodStr = '0 food upkeep/min'; foodCol = '#aabbaa';
+      } else {
+        foodStr = item.food+' food upkeep/min per level'; foodCol = '#ff9944';
+      }
+      ctx.fillStyle = foodCol;
       ctx.font = '6px "Press Start 2P"';
       ctx.fillText(foodStr, SX+20, iy+62);
       ctx.fillStyle='#88aa88'; ctx.font='6px "Press Start 2P"'; ctx.fillText('Have: '+item.have, SX+20, iy+76);
@@ -6065,6 +6199,7 @@ function drawShop() {
     ctx.fillStyle='#1a1030'; ctx.fillRect(SX+SW-8, SY+70+2, 5, trackH);
     ctx.fillStyle='#7755cc'; ctx.fillRect(SX+SW-8, thumbY, 5, thumbH);
   }
+  if (minionTipKey) drawMinionTooltip(minionTipKey, 1);
 }
 
 // ── Skill bar HUD ─────────────────────────────────────────────
