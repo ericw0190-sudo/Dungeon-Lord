@@ -20,8 +20,8 @@ const TRAP_TYPES = {
     color: '#886633', accentColor: '#ddaa55',
     baseCost: 10, upgradeBaseCost: 50, maxLevel: 5,
     cooldown: 1.5,
-    baseEffect: 0.10, upgradeBoost: 0.02,
-    effectDesc: lv => Math.round((0.10+(lv-1)*0.02)*100)+'% cur HP dmg',
+    baseEffect: 0.05, upgradeBoost: 0.01,
+    effectDesc: lv => Math.round((0.05+(lv-1)*0.01)*100)+'% max HP dmg',
   },
   fartMushroom: {
     name: 'Fart Mushroom', shortName: 'SHROOM',
@@ -456,6 +456,18 @@ const SKILLS = {
     ],
     use(idx) { attackNearest(); },
   },
+  goblinFlurry: {
+    name: 'Goblin Flurry', shortName: 'FLR',
+    desc: '60% ATK cone hit. 0.3s CD.',
+    cooldown: 0.3, rank: 'base',
+    tips: [
+      'Instantly strikes all enemies in a wide cone toward the cursor.',
+      'Damage: 60% of your ATK stat per enemy hit.',
+      'Same range as basic attack but covers a full cone area.',
+      'Very fast — 0.3 second cooldown.',
+    ],
+    use(idx) { goblinFlurryAttack(); },
+  },
   goblinSnatch: {
     name: 'Goblin Snatch', shortName: 'SNT',
     desc: '150% ATK cone + steal 5×LV coins/hit. 3s CD.',
@@ -573,13 +585,13 @@ const SKILLS = {
   },
   fLesserHeal: {
     name: '[F] Lesser Heal', shortName: 'LHEAL',
-    desc: 'Cast 1s (move interrupts). Heals friendly under cursor for 10% max HP. 3s CD.',
+    desc: 'Cast 1s (move interrupts). Green circle bursts at cursor — heals all nearby friendlies for 10% max HP. 3s CD.',
     cooldown: 3, rank: 'F',
     tips: [
       'Cast time: 1 second. Moving will cancel the cast.',
-      'Heals the friendly unit under the cursor.',
-      'Heal amount: 10% of the target\'s max HP.',
-      'Works on yourself and your minions.',
+      'On cast: a small green magic circle erupts at your cursor position.',
+      'All friendly units inside the circle are healed for 10% of their max HP.',
+      'Works on yourself and any minions in range.',
     ],
     use(idx) { startLesserHeal(idx); },
   },
@@ -862,13 +874,14 @@ const ctx = c.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
 // ── Global state ─────────────────────────────────────────────
-let grid, player, adventurers, heart, particles, projectiles, slashAnims, circleAnims, heavensWake, fireboltCast, lesserHealCast, healAnims, franticCharge, goblinEscapeBoostTimer, lhAOEAnim, quickFeetTimer;
+let grid, player, adventurers, heart, particles, projectiles, slashAnims, flurryAnims, circleAnims, heavensWake, fireboltCast, lesserHealCast, healAnims, franticCharge, goblinEscapeBoostTimer, lhAOEAnim, quickFeetTimer;
 let coins, food, wave, waveTarget, waveSpawned, waveDefeated, spawnTimer, waveTimer;
 let gameState, placeMode, keys, mouse, flash, flashT, flashTop, flashTopT, focused;
 let ctInv, sInv, crops, shopOpen, shopTab, skillMenuOpen, pendingSkill, paused, pauseStart;
 let invOpen, invTab;
 let placedTraps, trapInventory, trapSlots, trapSlotUpgrades, trapContext;
 let placedMinions, minionInventory, minionContext;
+let soilContext;
 let dungeonRank, fInfamy, fPartySize;
 let hungerTimer, starveDrainTimer, starving;
 let cam, worldRooms, worldCorridors, corridorInventory, dungeonRoomInventory;
@@ -907,6 +920,7 @@ function init() {
   particles   = [];
   projectiles = [];
   slashAnims   = [];
+  flurryAnims  = [];
   circleAnims  = [];
   heavensWake    = null;
   fireboltCast   = null;
@@ -951,6 +965,7 @@ function init() {
   trapSlots        = 20;
   trapSlotUpgrades = 0;
   trapContext      = null;
+  soilContext      = null;
 
   placedMinions   = [];
   minionInventory = [];
@@ -993,7 +1008,7 @@ function selectRace(raceName) {
   for (const sk of race.startSkills) {
     if (slotIdx < 4) player.slots[slotIdx++] = sk;
   }
-  player.slots[4] = 'basicAttack';
+  player.slots[4] = (player.race === 'goblin') ? 'goblinFlurry' : 'basicAttack';
   gameState = 'build';
 }
 
@@ -1014,6 +1029,7 @@ function togglePause() {
 function startRaid() {
   if (!heart || paused || gameState !== 'build' || heartCarried) return;
   trapContext = null;
+  soilContext = null;
   waveTarget  = dungeonRank === 0 ? fPartySize : wave + 1;
   waveSpawned = 0;
   waveDefeated= 0;
@@ -1167,6 +1183,7 @@ function update(dt) {
     quickFeetTimer = 0;
     lhAOEAnim      = null;
     trapContext    = null;
+    soilContext    = null;
     for (const t of placedTraps) { t.revealed = false; t.active = true; t.cooldownTimer = 0; }
     gameState   = 'build';
     showMsg('100 F-Infamy!  Dungeon ranked to ' + RANKS[dungeonRank] + '!');
@@ -1177,6 +1194,8 @@ function update(dt) {
   particles = particles.filter(p => p.life > 0);
   for (const s of slashAnims) s.life -= dt;
   slashAnims = slashAnims.filter(s => s.life > 0);
+  for (const f of flurryAnims) f.life -= dt;
+  flurryAnims = flurryAnims.filter(f => f.life > 0);
   for (const c of circleAnims) c.life -= dt;
   circleAnims = circleAnims.filter(c => c.life > 0);
   for (const h of healAnims) h.life -= dt;
@@ -2232,10 +2251,10 @@ function updateLesserHealCast(dt) {
 function drawLesserHealCast() {
   if (!lesserHealCast) return;
   const cx = player.x + 16, cy = player.y + 16;
-  const progress = lesserHealCast.timer / LH_CAST_TIME;
   const R = 26;
-  const pulse = 0.6 + 0.4 * Math.sin(progress * Math.PI * 10);
-  const rot   = -Math.PI / 2 + progress * Math.PI;
+  const t     = gNow() / 1000;
+  const pulse = 0.6 + 0.4 * Math.sin(t * 6);
+  const rot   = t * 1.5;
   ctx.save();
   ctx.globalAlpha = pulse;
   ctx.strokeStyle = '#00cc44';
@@ -2277,22 +2296,30 @@ function drawLesserHealCastBar() {
 }
 
 function spawnHealAnim(x, y) {
-  healAnims.push({ x, y, life: 0.7, maxLife: 0.7 });
+  healAnims.push({ x, y, life: 0.5, maxLife: 0.5 });
 }
 
 function drawLhAOEAnim() {
   if (!lhAOEAnim) return;
   const { cx, cy, life, maxLife } = lhAOEAnim;
-  const R   = LH_AOE_RADIUS * 1.5; // visual radius slightly larger than detection
+  const R   = LH_AOE_RADIUS; // matches actual hit radius (40px)
   const t   = gNow() / 1000;
-  const rot = t * 2.5;
-  const fadeIn  = Math.min(1, (maxLife - life) / 0.08); // snap in fast
-  const fadeOut = Math.min(1, life / 0.15);              // fade out last 0.15s
+  const rot = t * 3;
+  const age     = maxLife - life;
+  const fadeIn  = Math.min(1, age / 0.05);       // snap in in first 50ms
+  const fadeOut = Math.min(1, life / 0.08);       // fade out in last 80ms
   const alpha   = Math.min(fadeIn, fadeOut);
-  const pulse   = 0.75 + 0.25 * Math.sin(t * 10);
 
   ctx.save();
-  ctx.globalAlpha = alpha * pulse;
+
+  // Filled flash burst on first frame
+  if (age < 0.06) {
+    ctx.globalAlpha = (1 - age / 0.06) * 0.35;
+    ctx.fillStyle = '#44ff88';
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+  }
+
+  ctx.globalAlpha = alpha;
   ctx.strokeStyle = '#00cc44';
   ctx.shadowBlur  = 18;
   ctx.shadowColor = '#00ff66';
@@ -2301,20 +2328,16 @@ function drawLhAOEAnim() {
   ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
 
-  // Mid ring
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(cx, cy, R * 0.6, 0, Math.PI * 2); ctx.stroke();
-
   // Inner ring
   ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.arc(cx, cy, R * 0.25, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.55, 0, Math.PI * 2); ctx.stroke();
 
-  // Rotating triangle
+  // Rotating triangle (touches outer ring — same as cleric circle)
   ctx.lineWidth = 2;
   ctx.beginPath();
   for (let i = 0; i < 3; i++) {
     const a = rot + (i / 3) * Math.PI * 2;
-    const px = cx + Math.cos(a) * R * 0.85, py = cy + Math.sin(a) * R * 0.85;
+    const px = cx + Math.cos(a) * R, py = cy + Math.sin(a) * R;
     if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
   }
   ctx.closePath(); ctx.stroke();
@@ -2323,16 +2346,15 @@ function drawLhAOEAnim() {
   ctx.beginPath();
   for (let i = 0; i < 3; i++) {
     const a = -rot + (Math.PI / 3) + (i / 3) * Math.PI * 2;
-    const px = cx + Math.cos(a) * R * 0.85, py = cy + Math.sin(a) * R * 0.85;
+    const px = cx + Math.cos(a) * R, py = cy + Math.sin(a) * R;
     if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
   }
   ctx.closePath(); ctx.stroke();
 
   // Centre dot
-  ctx.globalAlpha = alpha;
   ctx.fillStyle = '#44ff88';
   ctx.shadowBlur = 8;
-  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
 
   ctx.restore();
 }
@@ -2707,7 +2729,7 @@ const PBX=DW-42, PBY=8, PBW=36, PBH=24; // pause button position
 c.addEventListener('keydown', e => {
   keys[e.code] = true;
   focused = true;
-  if (e.code === 'Escape') { shopOpen = false; skillMenuOpen = false; invOpen = false; trapContext = null; minionContext = null; pendingSkill = null; if (!heartCarried) placeMode = null; }
+  if (e.code === 'Escape') { shopOpen = false; skillMenuOpen = false; invOpen = false; trapContext = null; minionContext = null; soilContext = null; pendingSkill = null; if (!heartCarried) placeMode = null; }
   if (e.code === 'KeyP')   togglePause();
   const SKILL_CODES = ['KeyQ','KeyE','KeyR','KeyF'];
   if (SKILL_CODES.includes(e.code)) useSkill(SKILL_CODES.indexOf(e.code));
@@ -2775,6 +2797,7 @@ function handleClick(mx, my) {
   if (invOpen)                                 { inventoryClick(mx, my); return; }
   if (minionContext && gameState === 'build')  { minionContextClick(mx, my); return; }
   if (trapContext && gameState === 'build')    { trapContextClick(mx, my); return; }
+  if (soilContext && gameState === 'build')    { soilContextClick(mx, my); return; }
   if (gameState === 'build')  { dungeonBuildClick(mx, my); }
   else if (gameState === 'combat') dungeonCombatClick(mx, my);
 }
@@ -2940,6 +2963,7 @@ function dungeonBuildClick(mx, my) {
       heart        = null;
       heartCarried = true;
       placeMode    = 'heart';
+      shopOpen = false; skillMenuOpen = false; invOpen = false; pendingSkill = null;
       showMsg('Heart picked up!  Click a floor tile to place it.  Timers are frozen.');
       return;
     }
@@ -2964,6 +2988,8 @@ function dungeonBuildClick(mx, my) {
           const rem = Math.ceil(crops[key].growTime - elapsed);
           showMsg('Not ready!  ' + (rem>=60 ? Math.floor(rem/60)+'m ' : '') + rem%60 + 's left');
         }
+      } else {
+        soilContext = { gx: wgx, gy: wgy, worldPX, worldPY };
       }
     }
   }
@@ -3044,7 +3070,7 @@ function triggerTrap(trap, triggerAdv) {
 
   if (trap.type === 'groundSpikes') {
     const dmgPct = cfg.baseEffect + (trap.level - 1) * cfg.upgradeBoost;
-    const dmg = Math.max(1, Math.round(triggerAdv.hp * dmgPct));
+    const dmg = Math.max(1, Math.round(triggerAdv.maxHp * dmgPct));
     triggerAdv.hp -= dmg;
     triggerAdv.flash = 0.3;
     burst(triggerAdv.x+16, triggerAdv.y+16, ['#cc8844','#ff6622','#ffcc66'], 8);
@@ -3184,12 +3210,45 @@ function goblinSnatchAttack() {
   }
 }
 
+function goblinFlurryAttack() {
+  const px = player.x + 16, py = player.y + 16;
+  const mwx = mouse.x / cam.zoom + cam.wx, mwy = mouse.y / cam.zoom + cam.wy;
+  const aimDx = mwx - px, aimDy = mwy - py;
+  const aimLen = Math.hypot(aimDx, aimDy) || 1;
+  const aimNx = aimDx / aimLen, aimNy = aimDy / aimLen;
+  const FLURRY_RANGE = player.atkRange;
+  const FLURRY_COS   = Math.cos(Math.PI * 100 / 360); // 100° cone, same as Snatch
+  const flurryDmg    = Math.round(playerEffAtk() * 0.6);
+  const CONE_HALF_F = Math.PI * 50 / 180;
+  const sparks = [0, 0.25, 0.5, 0.75, 1].map(t => {
+    const a = -CONE_HALF_F + t * CONE_HALF_F * 2;
+    return [Math.cos(a) * player.atkRange, Math.sin(a) * player.atkRange];
+  });
+  const anim = { x:px, y:py, angle:Math.atan2(aimDy,aimDx), life:0.073, maxLife:0.073, hit:false, sparks };
+  flurryAnims.push(anim);
+  for (const a of adventurers) {
+    if (!a.alive) continue;
+    const dx = (a.x+16)-px, dy = (a.y+16)-py;
+    const dist = Math.hypot(dx,dy);
+    if (dist > FLURRY_RANGE) continue;
+    if ((dx/dist)*aimNx+(dy/dist)*aimNy < FLURRY_COS) continue;
+    a.hp -= flurryDmg; a.flash = 0.09;
+    const kl = dist||1;
+    a.kbX = (dx/kl)*90; a.kbY = (dy/kl)*90;
+    if (a.cls==='warrior'||a.cls==='ranger'||a.cls==='rogue') { a.aggroTimer=9999; a.aggroTarget='player'; a.aggroMinion=null; a.path=null; }
+    if (a.cls==='cleric') { a.fleeing=true; a.fleeTimer=3.0; a.fleeFromX=player.x+16; a.fleeFromY=player.y+16; a.path=null; }
+    anim.hit = true;
+    if (a.hp<=0) killAdventurer(a);
+    else burst(a.x+16,a.y+16,['#aaff22','#ccff55','#ffff44'],4);
+  }
+}
+
 function uiClick(mx, my) {
   const ux = DW;
   if (inR(mx,my, ux+10,155, UW-20,36)) { if (!heart && !heartCarried) placeMode = placeMode==='heart' ? null : 'heart'; return; }
-  if (inR(mx,my, ux+10,232, UW-20,28)) { shopOpen = !shopOpen; if (shopOpen) { skillMenuOpen = false; invOpen = false; pendingSkill = null; shopScrollY = 0; } return; }
-  if (inR(mx,my, ux+10,266, UW-20,28)) { skillMenuOpen = !skillMenuOpen; if (skillMenuOpen) { shopOpen = false; invOpen = false; skillScrollY = 0; } else { pendingSkill = null; } return; }
-  if (inR(mx,my, ux+10,300, UW-20,28)) { invOpen = !invOpen; if (invOpen) { shopOpen = false; skillMenuOpen = false; pendingSkill = null; invTab = 'crops'; invScrollY = 0; } return; }
+  if (inR(mx,my, ux+10,232, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } shopOpen = !shopOpen; if (shopOpen) { skillMenuOpen = false; invOpen = false; pendingSkill = null; shopScrollY = 0; } return; }
+  if (inR(mx,my, ux+10,266, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } skillMenuOpen = !skillMenuOpen; if (skillMenuOpen) { shopOpen = false; invOpen = false; skillScrollY = 0; } else { pendingSkill = null; } return; }
+  if (inR(mx,my, ux+10,300, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } invOpen = !invOpen; if (invOpen) { shopOpen = false; skillMenuOpen = false; pendingSkill = null; invTab = 'crops'; invScrollY = 0; } return; }
   if (inR(mx,my, ux+10,421, UW-20,28)) { if (heartCarried) showMsg('Place Heart down first!'); else if (!heart) showMsg('Place Heart first!'); else startRaid(); }
 }
 
@@ -3199,7 +3258,7 @@ function trapShopItems() {
       desc: 'Expand trap slots: '+trapSlots+' → '+(trapSlots+5),
       cost: 1000, have: trapSlots+' slots', maxed: false },
     { key:'groundSpikes', name:'GROUND SPIKES', type:'trap',
-      desc: '10% cur HP dmg  Upg:50 coins', cost: TRAP_TYPES.groundSpikes.baseCost, have: trapInventory.filter(t=>t.type==='groundSpikes').length },
+      desc: '5% max HP dmg  Upg:50 coins', cost: TRAP_TYPES.groundSpikes.baseCost, have: trapInventory.filter(t=>t.type==='groundSpikes').length },
     { key:'fartMushroom', name:'FART MUSHROOM', type:'trap',
       desc: '3x3 flee fog  Upg:200 coins', cost: TRAP_TYPES.fartMushroom.baseCost, have: trapInventory.filter(t=>t.type==='fartMushroom').length },
     { key:'quicksand', name:'QUICKSAND', type:'trap',
@@ -3227,15 +3286,21 @@ function minionShopItems() {
       have: minionInventory.filter(m=>m.type==='goblinFarmer').length + placedMinions.filter(m=>m.type==='goblinFarmer').length },
     { key:'goblinWarrior', name:'GOBLIN WARRIOR', type:'minion',
       desc:'Armored tank. High HP and DEF. Slow melee fighter.',
-      cost: MINION_TYPES.goblinWarrior.baseCost, food: MINION_TYPES.goblinWarrior.foodPerLevel,
+      cost: player.raceSkill === 'goblinRace' ? Math.round(MINION_TYPES.goblinWarrior.baseCost * 0.5) : MINION_TYPES.goblinWarrior.baseCost,
+      food: MINION_TYPES.goblinWarrior.foodPerLevel,
+      locked: ![...minionInventory,...placedMinions].some(m=>m.type==='goblin'&&m.level>=5),
       have: minionInventory.filter(m=>m.type==='goblinWarrior').length + placedMinions.filter(m=>m.type==='goblinWarrior').length },
     { key:'goblinArcher', name:'GOBLIN ARCHER', type:'minion',
       desc:'Poison arrows every 1s. Leaps away when cornered. 15-tile range.',
-      cost: MINION_TYPES.goblinArcher.baseCost, food: MINION_TYPES.goblinArcher.foodPerLevel,
+      cost: player.raceSkill === 'goblinRace' ? Math.round(MINION_TYPES.goblinArcher.baseCost * 0.5) : MINION_TYPES.goblinArcher.baseCost,
+      food: MINION_TYPES.goblinArcher.foodPerLevel,
+      locked: ![...minionInventory,...placedMinions].some(m=>m.type==='goblin'&&m.level>=5),
       have: minionInventory.filter(m=>m.type==='goblinArcher').length + placedMinions.filter(m=>m.type==='goblinArcher').length },
     { key:'goblinMage', name:'GOBLIN MAGE', type:'minion',
       desc:'Firebolts every 1.5s. Applies burn. Keeps distance. 10-tile range.',
-      cost: MINION_TYPES.goblinMage.baseCost, food: MINION_TYPES.goblinMage.foodPerLevel,
+      cost: player.raceSkill === 'goblinRace' ? Math.round(MINION_TYPES.goblinMage.baseCost * 0.5) : MINION_TYPES.goblinMage.baseCost,
+      food: MINION_TYPES.goblinMage.foodPerLevel,
+      locked: ![...minionInventory,...placedMinions].some(m=>m.type==='goblin'&&m.level>=5),
       have: minionInventory.filter(m=>m.type==='goblinMage').length + placedMinions.filter(m=>m.type==='goblinMage').length },
     { key:'giantSpider', name:'GIANT SPIDER', type:'minion',
       desc:'Bites nearby foes. Webs slow distant ones 50% for 3s.',
@@ -3311,7 +3376,8 @@ function shopClick(mx, my) {
     for (const item of items) {
       const rowH = item.food !== undefined ? 94 : 80;
       if (inR(mx,smy, SX+SW-104, iy+20, 88, 32)) {
-        if (coins >= item.cost) {
+        if (item.locked) { showMsg('Upgrade a Goblin Minion to level 5 to unlock this!'); }
+        else if (coins >= item.cost) {
           coins -= item.cost;
           const mEntry = { type:item.key, level:1, combatTimer:0, webCd:0, arrowCd:0, fireCd:0, leapCd:0, foodAccum:0 };
           if (item.key === 'mimic') { mEntry.mimicForm = 'chest'; mEntry.luredAdv = null; }
@@ -3460,6 +3526,7 @@ function draw() {
   drawLhAOEAnim();
   drawHealAnims();
   drawSnatchAnims();
+  drawFlurryAnims();
   drawParticles();
   drawProjectiles();
   drawPlayer();
@@ -3477,6 +3544,7 @@ function draw() {
   if (invOpen && !paused)                           drawInventory();
   if (trapContext && gameState==='build' && !paused)   drawTrapContext();
   if (minionContext && gameState==='build' && !paused) drawMinionContext();
+  if (soilContext && gameState==='build' && !paused)   drawSoilContext();
   if (paused)   drawPauseOverlay();
   drawPauseBtn();
   if (!focused) drawFocusPrompt();
@@ -4239,6 +4307,100 @@ function drawSnatchAnims() {
   }
 }
 
+function drawFlurryAnims() {
+  const REACH     = 45;
+  const CONE_HALF = Math.PI * 50 / 180;
+
+  for (const f of flurryAnims) {
+    const progress = 1 - f.life / f.maxLife; // 0=start 1=end
+
+    // Ease-out: blade accelerates then decelerates at end of swing
+    const t = 1 - Math.pow(1 - Math.min(progress / 0.85, 1), 2);
+    const swipeAngle = -CONE_HALF + t * CONE_HALF * 2;
+
+    // Fade in instantly, hold, then fade out in last 30%
+    const alpha = progress > 0.7 ? 1 - (progress - 0.7) / 0.3 : 1;
+
+    const col  = f.hit ? '#ccff22' : '#99ee22';
+    const glow = f.hit ? '#aaff00' : '#66cc00';
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(player.x + 16, player.y + 16);
+    ctx.rotate(f.angle);
+
+    // Trail sector — shows the swept area so far
+    ctx.fillStyle = f.hit ? 'rgba(170,255,34,0.13)' : 'rgba(110,220,10,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, REACH, -CONE_HALF, swipeAngle);
+    ctx.closePath();
+    ctx.fill();
+
+    // Trail arc edge
+    ctx.strokeStyle = f.hit ? '#88ff22' : '#55bb00';
+    ctx.lineWidth   = 1;
+    ctx.shadowBlur  = 4;
+    ctx.shadowColor = glow;
+    ctx.globalAlpha = alpha * 0.45;
+    ctx.beginPath();
+    ctx.arc(0, 0, REACH, -CONE_HALF, swipeAngle);
+    ctx.stroke();
+    ctx.globalAlpha = alpha;
+
+    // Leading blade line — the bright moving edge of the swipe
+    const bx = Math.cos(swipeAngle) * REACH;
+    const by = Math.sin(swipeAngle) * REACH;
+    ctx.strokeStyle = col;
+    ctx.lineWidth   = 3;
+    ctx.shadowBlur  = 14;
+    ctx.shadowColor = glow;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+
+    // Glowing tip on the blade
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur  = 22;
+    ctx.shadowColor = col;
+    ctx.beginPath();
+    ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Trailing glow line slightly behind the blade for motion blur feel
+    const trailOff = CONE_HALF * 0.28;
+    const trailAngle = swipeAngle - trailOff;
+    if (trailAngle > -CONE_HALF) {
+      const tx2 = Math.cos(trailAngle) * REACH * 0.92;
+      const ty2 = Math.sin(trailAngle) * REACH * 0.92;
+      ctx.strokeStyle = col;
+      ctx.lineWidth   = 1.5;
+      ctx.shadowBlur  = 7;
+      ctx.globalAlpha = alpha * 0.45;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(tx2, ty2);
+      ctx.stroke();
+      ctx.globalAlpha = alpha;
+    }
+
+    // Impact sparks at end of swing when hit
+    if (f.hit && progress > 0.72) {
+      const sparkA = (progress - 0.72) / 0.28;
+      ctx.globalAlpha = alpha * sparkA;
+      ctx.fillStyle   = '#ffff55';
+      ctx.shadowColor = '#ffaa00';
+      ctx.shadowBlur  = 18;
+      for (const [sx, sy] of f.sparks) {
+        ctx.beginPath(); ctx.arc(sx, sy, 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    ctx.restore();
+  }
+}
+
 function drawCircleAnims() {
   for (const c of circleAnims) {
     const progress  = 1 - c.life / c.maxLife;       // 0 → 1
@@ -4481,28 +4643,28 @@ function drawBuildUI(ux) {
   hr(ux+10, 200);
 
   // Shop button
-  const shHov=inR(mouse.x,mouse.y, ux+10,232, UW-20,28);
-  ctx.fillStyle=shHov?'#1a0f2e':'#110920'; ctx.fillRect(ux+10,232,UW-20,28);
-  ctx.strokeStyle='#7c3aed'; ctx.lineWidth=2; ctx.strokeRect(ux+10,232,UW-20,28);
-  ctx.fillStyle='#c084fc'; ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
+  const shHov=!heartCarried&&inR(mouse.x,mouse.y, ux+10,232, UW-20,28);
+  ctx.fillStyle=heartCarried?'#0d0b14':(shHov?'#1a0f2e':'#110920'); ctx.fillRect(ux+10,232,UW-20,28);
+  ctx.strokeStyle=heartCarried?'#332244':'#7c3aed'; ctx.lineWidth=2; ctx.strokeRect(ux+10,232,UW-20,28);
+  ctx.fillStyle=heartCarried?'#443366':'#c084fc'; ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
   ctx.fillText('\u25c6 SHOP \u25c6', ux+UW/2, 251); ctx.textAlign='left';
 
   // Skills button
-  const skHov=inR(mouse.x,mouse.y, ux+10,266, UW-20,28);
-  ctx.fillStyle=skillMenuOpen?'#0f1a30':(skHov?'#0c1828':'#080f1c');
+  const skHov=!heartCarried&&inR(mouse.x,mouse.y, ux+10,266, UW-20,28);
+  ctx.fillStyle=heartCarried?'#080c12':(skillMenuOpen?'#0f1a30':(skHov?'#0c1828':'#080f1c'));
   ctx.fillRect(ux+10,266,UW-20,28);
-  ctx.strokeStyle=skillMenuOpen?'#88bbff':'#2244aa'; ctx.lineWidth=2;
+  ctx.strokeStyle=heartCarried?'#1a2233':(skillMenuOpen?'#88bbff':'#2244aa'); ctx.lineWidth=2;
   ctx.strokeRect(ux+10,266,UW-20,28);
-  ctx.fillStyle=skillMenuOpen?'#88bbff':'#4488ff'; ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
+  ctx.fillStyle=heartCarried?'#2a3a55':(skillMenuOpen?'#88bbff':'#4488ff'); ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
   ctx.fillText('\u2694 SKILLS \u2694', ux+UW/2, 285); ctx.textAlign='left';
 
   // Inventory button
-  const invHov=inR(mouse.x,mouse.y, ux+10,300, UW-20,28);
-  ctx.fillStyle=invOpen?'#1a0e00':(invHov?'#1a1000':'#0f0900');
+  const invHov=!heartCarried&&inR(mouse.x,mouse.y, ux+10,300, UW-20,28);
+  ctx.fillStyle=heartCarried?'#0c0900':(invOpen?'#1a0e00':(invHov?'#1a1000':'#0f0900'));
   ctx.fillRect(ux+10,300,UW-20,28);
-  ctx.strokeStyle=invOpen?'#ffaa00':'#886600'; ctx.lineWidth=2;
+  ctx.strokeStyle=heartCarried?'#2a2000':(invOpen?'#ffaa00':'#886600'); ctx.lineWidth=2;
   ctx.strokeRect(ux+10,300,UW-20,28);
-  ctx.fillStyle=invOpen?'#ffaa00':'#cc8800'; ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
+  ctx.fillStyle=heartCarried?'#3a2a00':(invOpen?'#ffaa00':'#cc8800'); ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
   ctx.fillText('\u25a4 INVENTORY', ux+UW/2, 319); ctx.textAlign='left';
 
   hr(ux+10, 334);
@@ -4885,6 +5047,66 @@ function trapContextClick(mx, my) {
   if (!inR(mx,my, px,py, pw,ph)) trapContext = null;
 }
 
+function soilPopupPos() {
+  const sx = (soilContext.gx * TILE - cam.wx) * cam.zoom;
+  const sy = (soilContext.gy * TILE - cam.wy) * cam.zoom;
+  const pw = 160, ph = 72;
+  let px = sx + TILE * cam.zoom + 4, py = sy - 10;
+  if (px + pw > DW - 4) px = sx - pw - 4;
+  if (py + ph > CH - 4) py = CH - ph - 4;
+  if (py < 4) py = 4;
+  return { px, py, pw, ph };
+}
+
+function drawSoilContext() {
+  const { px, py, pw, ph } = soilPopupPos();
+  const hasMinion = placedMinions.some(m => m.gx === soilContext.gx && m.gy === soilContext.gy);
+
+  ctx.fillStyle = '#080c04'; ctx.fillRect(px, py, pw, ph);
+  ctx.strokeStyle = '#886633'; ctx.lineWidth = 2; ctx.strokeRect(px, py, pw, ph);
+
+  ctx.fillStyle = '#cc9944'; ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'left';
+  ctx.fillText('Dungeon Soil', px+8, py+14);
+  ctx.fillStyle = '#665533'; ctx.font = '5px "Press Start 2P"';
+  ctx.fillText(hasMinion ? 'Minion is standing here' : 'Empty — ready to pick up', px+8, py+26);
+
+  // PICK UP button
+  const canPickUp = !hasMinion;
+  const puHov = canPickUp && inR(mouse.x, mouse.y, px+6, py+36, pw-12, 22);
+  ctx.fillStyle = !canPickUp ? '#0d0d08' : (puHov ? '#1a1400' : '#111008');
+  ctx.fillRect(px+6, py+36, pw-12, 22);
+  ctx.strokeStyle = canPickUp ? '#886633' : '#332211'; ctx.lineWidth = 1;
+  ctx.strokeRect(px+6, py+36, pw-12, 22);
+  ctx.fillStyle = canPickUp ? '#cc9944' : '#443322';
+  ctx.font = '5px "Press Start 2P"'; ctx.textAlign = 'center';
+  ctx.fillText(hasMinion ? 'BLOCKED' : 'PICK UP', px+pw/2, py+50);
+
+  // Close X
+  const clX = px+pw-18, clY = py+4;
+  ctx.fillStyle = '#330000'; ctx.fillRect(clX, clY, 14, 14);
+  ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 1; ctx.strokeRect(clX, clY, 14, 14);
+  ctx.fillStyle = '#ff4444'; ctx.fillText('X', clX+7, clY+10);
+  ctx.textAlign = 'left';
+}
+
+function soilContextClick(mx, my) {
+  const { px, py, pw, ph } = soilPopupPos();
+  // Close X
+  if (inR(mx, my, px+pw-18, py+4, 14, 14)) { soilContext = null; return; }
+  // Pick Up
+  if (inR(mx, my, px+6, py+36, pw-12, 22)) {
+    const hasMinion = placedMinions.some(m => m.gx === soilContext.gx && m.gy === soilContext.gy);
+    if (hasMinion) { showMsg('Remove the minion first before picking up this soil!'); return; }
+    setWorldTile(soilContext.gx, soilContext.gy, T_FLOOR);
+    ctInv++;
+    burst(soilContext.worldPX+20, soilContext.worldPY+20, ['#cc8833','#ffcc55','#886622'], 6);
+    showMsg('Soil tile picked up!  (' + ctInv + ' owned)');
+    soilContext = null;
+    return;
+  }
+  if (!inR(mx, my, px, py, pw, ph)) soilContext = null;
+}
+
 function drawInventory() {
   ctx.fillStyle='#000000aa'; ctx.fillRect(0,0,DW,CH);
   ctx.fillStyle='#0f0900'; ctx.fillRect(SX,SY,SW,SH);
@@ -4983,7 +5205,146 @@ function drawInventoryCrops() {
   }
 }
 
+// ── Trap tooltip panel (shared by shop + inventory) ───────────
+function drawTrapTooltip(key, level) {
+  const cfg = TRAP_TYPES[key];
+  const col  = cfg.accentColor || cfg.color;
+  const TTX  = SX + SW + 8;
+  const TTW  = CW - TTX - 8;
+  const TTY  = SY - 10;
+  const TTH  = SH + 20;
+  const mid  = TTX + TTW / 2;
+  const PAD  = 10;
+
+  ctx.fillStyle = '#040209';
+  ctx.fillRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col; ctx.lineWidth = 2;
+  ctx.strokeRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col+'33'; ctx.lineWidth = 1;
+  ctx.strokeRect(TTX+3, TTY+3, TTW-6, TTH-6);
+  ctx.fillStyle = col+'22';
+  ctx.fillRect(TTX+2, TTY+2, TTW-4, 46);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(TTX+4, TTY+4, TTW-8, TTH-8); ctx.clip();
+
+  // Trap icon (scaled drawTrapTile)
+  const iconSize = 40;
+  const iconX = mid - iconSize * 0.55;
+  const iconY = TTY + 4;
+  ctx.save();
+  ctx.translate(iconX, iconY);
+  ctx.scale(1.1, 1.1);
+  const mockTrap = { type: key, level: level, revealed: true, active: true, cooldownTimer: 0, dir: 'right' };
+  drawTrapTile(0, 0, mockTrap, performance.now());
+  ctx.restore();
+
+  // Name
+  let cy = TTY + 52;
+  ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillStyle = col;
+  const nameWords = cfg.name.split(' ');
+  let nameLine = '';
+  for (const w of nameWords) {
+    const test = nameLine + (nameLine ? ' ' : '') + w;
+    if (ctx.measureText(test).width > TTW - PAD*2) {
+      ctx.fillText(nameLine, mid, cy); nameLine = w; cy += 10;
+    } else { nameLine = test; }
+  }
+  ctx.fillText(nameLine, mid, cy); cy += 12;
+
+  // Type badge
+  const BADGES = {
+    groundSpikes: ['DAMAGE',     '#2e1200', '#ff9944'],
+    fartMushroom: ['AREA EFFECT','#0e200a', '#88dd33'],
+    quicksand:    ['SLOW + DOT', '#221a00', '#f0d060'],
+    emberbolt:    ['DIRECTIONAL','#2a0a00', '#ff5522'],
+  };
+  const [badgeLabel, badgeBg, badgeFg] = BADGES[key] || ['TRAP','#111','#aaa'];
+  const bw = 76, bh = 13;
+  ctx.fillStyle = badgeBg; ctx.fillRect(mid-bw/2, cy-10, bw, bh);
+  ctx.strokeStyle = badgeFg; ctx.lineWidth = 1; ctx.strokeRect(mid-bw/2, cy-10, bw, bh);
+  ctx.font = '5px "Press Start 2P"'; ctx.fillStyle = badgeFg;
+  ctx.fillText(badgeLabel, mid, cy-1); cy += 8;
+
+  // Divider
+  ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
+
+  // Level stats line
+  ctx.textAlign = 'left'; ctx.font = '5px "Press Start 2P"';
+  ctx.fillStyle = col;
+  ctx.fillText('Lv'+level+' Effect: '+cfg.effectDesc(level), TTX+PAD, cy); cy += 9;
+  if (cfg.maxLevel) {
+    ctx.fillStyle = '#776655';
+    ctx.fillText('Max level: '+cfg.maxLevel, TTX+PAD, cy); cy += 9;
+  }
+  cy += 2;
+
+  // Divider
+  ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
+
+  // Bullet tips — derived from cfg so they stay in sync with any stat changes
+  const TIPS = {
+    groundSpikes: cfg => [
+      'Hidden until an adventurer walks over it.',
+      `Deals ${Math.round(cfg.baseEffect*100)}% of the enemy's max HP on trigger.`,
+      `Each upgrade adds +${Math.round(cfg.upgradeBoost*100)}% more damage (max level ${cfg.maxLevel}).`,
+      `Rearms and fires again every ${cfg.cooldown} seconds.`,
+    ],
+    fartMushroom: cfg => [
+      'Hidden until an adventurer walks over it.',
+      'Releases a fear cloud that scares enemies away.',
+      'The cloud area grows larger with each upgrade.',
+      'Fires once per wave — regrows automatically next wave.',
+    ],
+    quicksand: cfg => [
+      'Invisible to adventurers — a pure ambush trap.',
+      'Slows enemies caught inside by 20%.',
+      'Also drains 1% of max HP every second while inside.',
+      'Never breaks — stays active forever.',
+      'Upgrade for stronger slow and more damage per second.',
+    ],
+    emberbolt: cfg => [
+      'Always visible. Fires a fire arrow automatically.',
+      'Choose firing direction with WASD keys when placing.',
+      'Each arrow deals 10% of the target\'s max HP on hit.',
+      'Applies Burn: ongoing fire damage for 5 seconds.',
+      'Enemies will try to dodge the arrows.',
+      `Fires every ${cfg.fireRateAtLevel(1)}s at level 1. Upgrade to fire faster.`,
+    ],
+  };
+  const tips = TIPS[key] ? TIPS[key](cfg) : [];
+  ctx.font = '5px "Press Start 2P"';
+  const lineW = TTW - PAD*2 - 9;
+  const textX = TTX + PAD + 8;
+  const dotX  = TTX + PAD;
+  for (const tip of tips) {
+    ctx.fillStyle = col; ctx.fillRect(dotX, cy-4, 4, 4);
+    const words = tip.split(' ');
+    let line = '', ty = cy, first = true;
+    for (const w of words) {
+      const test = line + (line ? ' ' : '') + w;
+      if (ctx.measureText(test).width > lineW) {
+        ctx.fillStyle = first ? '#ddeeff' : '#99aabb';
+        ctx.fillText(line, textX, ty); line = w; ty += 10; first = false;
+      } else { line = test; }
+    }
+    ctx.fillStyle = first ? '#ddeeff' : '#99aabb';
+    if (line) ctx.fillText(line, textX, ty);
+    cy = ty + 13;
+  }
+
+  // Cost footer
+  cy += 2; ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
+  ctx.font = '5px "Press Start 2P"';
+  ctx.fillStyle = '#ffd700'; ctx.fillText('Buy cost:  '+cfg.baseCost+' coins', TTX+PAD, cy); cy += 9;
+  ctx.fillStyle = '#aabbcc'; ctx.fillText('Upg cost:  '+cfg.upgradeBaseCost+' coins/level', TTX+PAD, cy);
+
+  ctx.restore();
+  ctx.textAlign = 'left';
+}
+
 function drawInventoryTraps() {
+  let trapTip = null;
   let iy = SY+76;
   const INV_VIEW_H = SH - 70;
 
@@ -5036,6 +5397,7 @@ function drawInventoryTraps() {
       const cfg = TRAP_TYPES[grp.type];
       const active = placeMode === 'trap_'+grp.type;
       const iHov = inR(mouse.x,smy, SX+8,iy, SW-16,60);
+      if (iHov) trapTip = { key: grp.type, level: grp.level };
       ctx.fillStyle=iHov?'#1a1000':'#110b00'; ctx.fillRect(SX+8,iy,SW-16,60);
       ctx.strokeStyle=active?cfg.accentColor:'#2a1800'; ctx.lineWidth=active?2:1;
       ctx.strokeRect(SX+8,iy,SW-16,60);
@@ -5085,6 +5447,7 @@ function drawInventoryTraps() {
     ctx.fillStyle='#3a2200'; ctx.fillRect(SX+SW-8,contentTop+2,5,trackH);
     ctx.fillStyle='#cc8800'; ctx.fillRect(SX+SW-8,thumbY,5,thumbH);
   }
+  if (trapTip) drawTrapTooltip(trapTip.key, trapTip.level);
 }
 
 function inventoryClick(mx, my) {
@@ -5442,7 +5805,8 @@ function updateMinions(dt) {
     // Find nearest adventurer inside the dungeon within detection range
     const mcx = m.type === 'giantSpider' ? m.x+40 : m.x+16;
     const mcy = m.type === 'giantSpider' ? m.y+40 : m.y+16;
-    let bestAdv = null, bestDist = stats.detectRng;
+    const mDetectRng = m.type === 'giantSpider' ? Math.max(stats.detectRng, TILE * 8) : stats.detectRng;
+    let bestAdv = null, bestDist = mDetectRng;
     for (const a of adventurers) {
       if (!a.alive || !a.enteredDungeon) continue;
       const d = Math.hypot((a.x+16)-mcx, (a.y+16)-mcy);
@@ -5455,28 +5819,26 @@ function updateMinions(dt) {
       const dist = Math.hypot(dx, dy) || 1;
 
       if (m.type === 'giantSpider') {
-        // Move toward target unless already at bite range
-        if (dist > TILE) {
-          const nx = (dx/dist)*stats.speed*mSpeedMult*dt, ny = (dy/dist)*stats.speed*mSpeedMult*dt;
-          if (canMoveAdv2x2(m.x+nx, m.y)) m.x += nx;
-          if (canMoveAdv2x2(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
-        }
-        // Priority 1: Bite in melee range
-        if (dist <= TILE && m.atkCd <= 0) {
-          bestAdv.hp -= stats.atk;
-          bestAdv.flash = 0.12;
-          m.atkCd = stats.atkCdMax;
-          m.combatTimer = 5;
-          if (bestAdv.cls === 'warrior' || bestAdv.cls === 'ranger' || bestAdv.cls === 'rogue') {
-            bestAdv.aggroTimer = 6; bestAdv.aggroTarget = 'minion'; bestAdv.aggroMinion = m; bestAdv.path = null;
+        const BITE_RANGE = TILE;      // 1 tile = 40px
+        const WEB_RANGE  = TILE * 8;  // 8 tiles = 320px
+        if (dist <= BITE_RANGE) {
+          // Priority 1: Bite
+          if (m.atkCd <= 0) {
+            bestAdv.hp -= stats.atk;
+            bestAdv.flash = 0.12;
+            m.atkCd = stats.atkCdMax;
+            m.combatTimer = 5;
+            if (bestAdv.cls === 'warrior' || bestAdv.cls === 'ranger' || bestAdv.cls === 'rogue') {
+              bestAdv.aggroTimer = 6; bestAdv.aggroTarget = 'minion'; bestAdv.aggroMinion = m; bestAdv.path = null;
+            }
+            if (bestAdv.cls === 'cleric') { bestAdv.fleeing = true; bestAdv.fleeTimer = 3.0; bestAdv.fleeFromX = mcx; bestAdv.fleeFromY = mcy; bestAdv.path = null; }
+            const kl = dist || 1;
+            bestAdv.kbX = (dx/kl)*80; bestAdv.kbY = (dy/kl)*80;
+            burst(bestAdv.x+16, bestAdv.y+16, ['#886633','#553311','#cc9955'], 5);
+            if (bestAdv.hp <= 0) killAdventurer(bestAdv);
           }
-          if (bestAdv.cls === 'cleric') { bestAdv.fleeing = true; bestAdv.fleeTimer = 3.0; bestAdv.fleeFromX = mcx; bestAdv.fleeFromY = mcy; bestAdv.path = null; }
-          const kl = dist || 1;
-          bestAdv.kbX = (dx/kl)*80; bestAdv.kbY = (dy/kl)*80;
-          burst(bestAdv.x+16, bestAdv.y+16, ['#886633','#553311','#cc9955'], 5);
-          if (bestAdv.hp <= 0) killAdventurer(bestAdv);
-        // Priority 2: Web shot at range
-        } else if (dist <= stats.webRange && m.webCd <= 0) {
+        } else if (dist <= WEB_RANGE && m.webCd <= 0) {
+          // Priority 2: Web shot
           projectiles.push({
             x: mcx, y: mcy,
             vx: (dx/dist)*110, vy: (dy/dist)*110,
@@ -5484,6 +5846,11 @@ function updateMinions(dt) {
           });
           m.webCd = stats.webCdMax;
           burst(mcx, mcy, ['#aaaaaa','#bbbbbb','#888888'], 3);
+        } else {
+          // Priority 3: Move straight toward target
+          const nx = (dx/dist)*stats.speed*mSpeedMult*dt, ny = (dy/dist)*stats.speed*mSpeedMult*dt;
+          if (canMoveAdv2x2(m.x+nx, m.y)) m.x += nx;
+          if (canMoveAdv2x2(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
         }
       } else if (m.type === 'goblinWarrior') {
         if (dist > 36) {
@@ -5645,9 +6012,8 @@ function drawMinions() {
       ctx.fillStyle = '#001100'; ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center';
       ctx.fillText('L'+m.level, dx+9, dy-9);
       if (!m.target && gameState === 'combat') {
-        const stats = cfg.statsAtLevel(m.level);
         ctx.strokeStyle = cfg.color + '33'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(dx+40, dy+40, stats.detectRng, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(dx+40, dy+40, TILE * 8, 0, Math.PI*2); ctx.stroke();
       }
     } else {
       ctx.fillStyle = '#00000055'; ctx.fillRect(dx+3, m.y+28, 26, Math.max(2, 4-bob));
@@ -5840,17 +6206,18 @@ function drawMinionTooltip(key, level) {
   cy += 2; ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
 
   // Bullet tips
+  // Tips derived from cfg so they stay in sync with any stat changes
   const TIPS = {
-    skeleton:     ['Very fragile — best used in large numbers.','Attacks any adventurer in range on sight.','10 second respawn.'],
-    goblin:       ['Fast melee fighter. Low HP but quick.','Attacks on sight.','Goblin race players get 50% off.','60 second respawn.'],
-    goblinFarmer: ['Must be placed on a Soil tile.','Generates food passively every minute.','Does not attack — runs from danger.','No food upkeep cost.','150 second respawn.'],
-    goblinWarrior:['Frontline tank with high HP and armor.','DEF stat reduces damage from each hit.','Slow but soaks a lot of punishment.','75 second respawn.'],
-    goblinArcher: ['Fires poison arrows every 2–3 seconds.','Poison deals damage over time.','Leaps away when enemies get too close.','50 second respawn.'],
-    goblinMage:   ['Launches firebolts every 1.5 seconds.','Firebolt applies Burn: ongoing fire damage.','Backs away from nearby enemies.','65 second respawn.'],
-    giantSpider:  ['Bites enemies up close for direct damage.','Spits webs at distant enemies.','Web slows targets 50% for 3 seconds.','90 second respawn.'],
-    mimic:        ['Disguises as a treasure chest.','Lures adventurers close before attacking.','Works great near traps or chokepoints.','120 second respawn.'],
+    skeleton:     cfg => ['Very fragile — best used in large numbers.','Attacks any adventurer in range on sight.',`${cfg.respawnTime} second respawn.`],
+    goblin:       cfg => ['Fast melee fighter. Low HP but quick.','Attacks on sight.','Goblin race players get 50% off.',`${cfg.respawnTime} second respawn.`],
+    goblinFarmer: cfg => ['Must be placed on a Soil tile.',`Generates +${cfg.foodGenAtLevel(1)} food/min at level 1, scaling per level.`,'Does not attack — runs from danger.','No food upkeep cost.',`${cfg.respawnTime} second respawn.`],
+    goblinWarrior:cfg => ['Frontline tank with high HP and armor.','DEF stat reduces damage from each hit.','Slow but soaks a lot of punishment.','Goblin race players get 50% off.',`${cfg.respawnTime} second respawn.`],
+    goblinArcher: cfg => ['Fires poison arrows every 2–3 seconds.','Poison deals damage over time.','Leaps away when enemies get too close.','Goblin race players get 50% off.',`${cfg.respawnTime} second respawn.`],
+    goblinMage:   cfg => ['Launches firebolts every 1.5 seconds.','Firebolt applies Burn: ongoing fire damage.','Backs away from nearby enemies.','Goblin race players get 50% off.',`${cfg.respawnTime} second respawn.`],
+    giantSpider:  cfg => ['Bites enemies up close for direct damage.','Spits webs at distant enemies.','Web slows targets 50% for 3 seconds.',`${cfg.respawnTime} second respawn.`],
+    mimic:        cfg => ['Disguises as a treasure chest.','Lures adventurers close before attacking.','Works great near traps or chokepoints.',`${cfg.respawnTime} second respawn.`],
   };
-  const tips = TIPS[key] || [];
+  const tips = TIPS[key] ? TIPS[key](cfg) : [];
   const lineW = TTW - PAD*2 - 9;
   const textX = TTX + PAD + 8;
   const dotX  = TTX + PAD;
@@ -6157,11 +6524,13 @@ function drawShop() {
   ctx.translate(0, -shopScrollY);
   let iy = SY + 76;
   let minionTipKey = null;
+  let trapTipKey = null;
   for (const item of items) {
     const hasFood = item.food !== undefined;
     const rowH = hasFood ? 94 : 80;
     const iHov=inR(mouse.x,smy, SX+8,iy, SW-16,rowH);
     if (iHov && shopTab === 'minions' && item.key) minionTipKey = item.key;
+    if (iHov && shopTab === 'traps' && item.type === 'trap') trapTipKey = item.key;
     ctx.fillStyle=iHov?'#1a1030':'#120820'; ctx.fillRect(SX+8,iy,SW-16,rowH);
     ctx.strokeStyle='#2a1848'; ctx.lineWidth=1; ctx.strokeRect(SX+8,iy,SW-16,rowH);
     ctx.fillStyle='#ffffff'; ctx.font='8px "Press Start 2P"'; ctx.fillText(item.name, SX+20, iy+18);
@@ -6183,12 +6552,16 @@ function drawShop() {
     } else {
       ctx.fillStyle='#88aa88'; ctx.font='6px "Press Start 2P"'; ctx.fillText('Have: '+item.have, SX+20, iy+62);
     }
-    const canBuy=!item.maxed&&coins>=item.cost, bx=SX+SW-104, by=iy+20;
+    if (item.locked) {
+      ctx.fillStyle = '#888866'; ctx.font = '5px "Press Start 2P"';
+      ctx.fillText('Requires: Goblin Minion Lv5', SX+20, iy+(hasFood?82:68));
+    }
+    const canBuy=!item.maxed&&!item.locked&&coins>=item.cost, bx=SX+SW-104, by=iy+20;
     const bHov=inR(mouse.x,smy, bx,by, 88,32);
-    ctx.fillStyle=canBuy?(bHov?'#1a4a1a':'#0f3010'):'#0d0a12'; ctx.fillRect(bx,by,88,32);
-    ctx.strokeStyle=canBuy?'#44ff44':'#2a2233'; ctx.lineWidth=1.5; ctx.strokeRect(bx,by,88,32);
-    ctx.fillStyle=canBuy?'#44ff44':(item.maxed?'#335533':'#443355'); ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
-    ctx.fillText(item.maxed?'MAX':'BUY', bx+44, by+20); ctx.textAlign='left';
+    ctx.fillStyle=item.locked?'#1a1a0a':(canBuy?(bHov?'#1a4a1a':'#0f3010'):'#0d0a12'); ctx.fillRect(bx,by,88,32);
+    ctx.strokeStyle=item.locked?'#555533':(canBuy?'#44ff44':'#2a2233'); ctx.lineWidth=1.5; ctx.strokeRect(bx,by,88,32);
+    ctx.fillStyle=item.locked?'#888844':(canBuy?'#44ff44':(item.maxed?'#335533':'#443355')); ctx.font='8px "Press Start 2P"'; ctx.textAlign='center';
+    ctx.fillText(item.locked?'LOCK':(item.maxed?'MAX':'BUY'), bx+44, by+20); ctx.textAlign='left';
     iy += rowH;
   }
   ctx.restore();
@@ -6200,6 +6573,7 @@ function drawShop() {
     ctx.fillStyle='#7755cc'; ctx.fillRect(SX+SW-8, thumbY, 5, thumbH);
   }
   if (minionTipKey) drawMinionTooltip(minionTipKey, 1);
+  if (trapTipKey)   drawTrapTooltip(trapTipKey, 1);
 }
 
 // ── Skill bar HUD ─────────────────────────────────────────────
