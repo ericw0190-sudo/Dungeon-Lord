@@ -491,6 +491,57 @@ const SKILLS = {
     ],
     use() {},
   },
+  spiritRace: {
+    name: 'Spirit', shortName: 'SPRIT',
+    desc: 'Soul Harvest: Heal 1% max HP per kill. Ethereal Veil: slow + 20% miss aura. Benevolent: -20% base ATK.',
+    cooldown: 0, rank: 'base',
+    tips: [
+      'SOUL HARVEST — Heal 1% max HP whenever any adventurer dies.',
+      'ETHEREAL VEIL — Adventurers within 2 tiles move 10% slower.',
+      'ETHEREAL VEIL — Enemy attacks have a 20% chance to miss entirely.',
+      'BENEVOLENT — Base ATK starts 20% lower than other races.',
+      'HP REGEN — Slowly recover HP when out of combat.',
+    ],
+    use() {},
+  },
+  spiritSiphon: {
+    name: 'Spirit Siphon', shortName: 'SIPH',
+    desc: '80% ATK cone hit. 0.55s CD. Heals 5% of damage dealt.',
+    cooldown: 0.55, rank: 'base',
+    tips: [
+      'Strikes all enemies in a cone toward the cursor.',
+      'Damage: 80% of your ATK stat per enemy hit.',
+      'Heals you for 5% of the total damage dealt.',
+      'Replaces basic attack for the Spirit Race.',
+    ],
+    use(idx) { spiritSiphonAttack(); },
+  },
+  spectralGrasp: {
+    name: 'Spectral Grasp', shortName: 'GRSP',
+    desc: 'Ghostly hand pulls nearest adventurer 2 tiles toward you. Stuns 0.5s. 100% ATK dmg. 3s CD.',
+    cooldown: 3, rank: 'base',
+    tips: [
+      'Reaches 4 tiles in front of the player toward the cursor.',
+      'Pulls the nearest adventurer in that zone 2 tiles toward you.',
+      'Stuns the target for 0.5 seconds.',
+      'Deals 100% of your ATK stat as damage.',
+      'Great for dragging enemies into traps.',
+    ],
+    use(idx) { spectralGraspAttack(idx); },
+  },
+  ghostlyWail: {
+    name: 'Ghostly Wail', shortName: 'WAIL',
+    desc: 'Cone fear toward cursor. 3 tile radius. No damage. Enemies flee 1.5s. 8s CD.',
+    cooldown: 8, rank: 'base',
+    tips: [
+      'Releases a terrifying wail in a cone toward your cursor.',
+      'Same cone width as Goblin Snatch — 100° arc.',
+      '3 tile radius. Deals no damage.',
+      'All enemies hit flee away from you for 1.5 seconds.',
+      'Great for redirecting groups away from the Heart.',
+    ],
+    use(idx) { ghostlyWailAttack(idx); },
+  },
   goblinEscape: {
     name: 'Goblin Maneuver', shortName: 'MNV',
     desc: 'Leap 3 tiles toward mouse. Invincible while leaping. +20% SPD for 0.5s after landing. 5s CD.',
@@ -603,7 +654,7 @@ const HW_RAIN_TIME = 5.0;
 const HW_FADE_TIME = 1.8;
 const HW_RADIUS    = 1.5 * 40;  // 60px — 3-tile diameter circle
 const HW_DMG_TICK  = 0.2;
-const HW_DMG_MULT  = 1.0;  // damage per tick as multiple of player DPS
+const HW_DMG_MULT  = 1.0;  // damage per tick as multiple of player ATK
 
 // ── Lesser Heal constants ─────────────────────────────────────
 const LH_CAST_TIME  = 1.0;
@@ -614,7 +665,7 @@ const LH_AOE_RADIUS = TILE;   // 40px — radius of the 2×2 AoE heal circle
 // ── Firebolt constants ────────────────────────────────────────
 const FB_CAST_TIME  = 0.5;
 const FB_SPEED      = 380;
-const FB_DMG_MULT   = 2.0;   // direct damage as multiple of player DPS
+const FB_DMG_MULT   = 2.0;   // direct damage as multiple of player ATK
 const FB_BURN_PCT   = 0.005; // burn dmg per tick as fraction of enemy max HP
 const FB_BURN_DUR   = 2.0;   // seconds burn lasts
 const FB_BURN_TICK  = 1.0;   // seconds between burn ticks
@@ -797,12 +848,12 @@ const RACES = {
   spirit: {
     name: 'SPIRIT',
     color: '#c8ddff',
-    desc: 'A spectral being of mist.',
-    traits: ['Coming soon...'],
+    desc: 'An ethereal specter of the dungeon.',
+    traits: ['Soul Harvest: +1% max HP on kill', 'Ethereal Veil: slow + 20% miss aura', 'Benevolent: -20% base ATK', 'HP regen out of combat'],
     sprite: SPIRIT_SPR,
     sprColors: SPIRIT_COL,
-    startSkills: [],
-    comingSoon: true,
+    startSkills: ['spectralGrasp', 'ghostlyWail'],
+    comingSoon: false,
   },
   slime: {
     name: 'SLIME',
@@ -875,6 +926,7 @@ ctx.imageSmoothingEnabled = false;
 
 // ── Global state ─────────────────────────────────────────────
 let grid, player, adventurers, heart, particles, projectiles, slashAnims, flurryAnims, circleAnims, heavensWake, fireboltCast, lesserHealCast, healAnims, franticCharge, goblinEscapeBoostTimer, lhAOEAnim, quickFeetTimer;
+let spiritSiphonAnims, spectralGraspAnim, ghostlyWailAnim;
 let coins, food, wave, waveTarget, waveSpawned, waveDefeated, spawnTimer, waveTimer;
 let gameState, placeMode, keys, mouse, flash, flashT, flashTop, flashTopT, focused;
 let ctInv, sInv, crops, shopOpen, shopTab, skillMenuOpen, pendingSkill, paused, pauseStart;
@@ -930,6 +982,9 @@ function init() {
   goblinEscapeBoostTimer = 0;
   quickFeetTimer = 0;
   lhAOEAnim      = null;
+  spiritSiphonAnims = [];
+  spectralGraspAnim = null;
+  ghostlyWailAnim   = null;
 
   coins       = 600;
   food        = 10;
@@ -1001,14 +1056,15 @@ function selectRace(raceName) {
   if (!race || race.comingSoon) return;
   init(); // resets state; gameState becomes 'raceSelect', then overridden below
   player.race      = raceName;
-  player.raceSkill = (raceName === 'goblin') ? 'goblinRace' : null;
+  player.raceSkill = raceName === 'goblin' ? 'goblinRace' : raceName === 'spirit' ? 'spiritRace' : null;
   player.sprite    = race.sprite;
   player.sprColors = race.sprColors;
+  if (raceName === 'spirit') player.atkDmg = Math.round(player.atkDmg * 0.8);
   let slotIdx = 0;
   for (const sk of race.startSkills) {
     if (slotIdx < 4) player.slots[slotIdx++] = sk;
   }
-  player.slots[4] = (player.race === 'goblin') ? 'goblinFlurry' : 'basicAttack';
+  player.slots[4] = player.race === 'goblin' ? 'goblinFlurry' : player.race === 'spirit' ? 'spiritSiphon' : 'basicAttack';
   gameState = 'build';
 }
 
@@ -1135,6 +1191,7 @@ function spawnAdventurer() {
     orbitDir: Math.random() > 0.5 ? 1 : -1,
     dashTimer: cls === 'rogue' ? 1.0 + Math.random() * 2.0 : 0, dashPhase: true,
     webSlowTimer: 0,
+    stunTimer: 0,
     burnTimer: 0, burnDmg: 0, burnTickTimer: 0,
     isHealing: false,
     luredByMimic: null,
@@ -1182,6 +1239,9 @@ function update(dt) {
     goblinEscapeBoostTimer = 0;
     quickFeetTimer = 0;
     lhAOEAnim      = null;
+    spiritSiphonAnims = [];
+    spectralGraspAnim = null;
+    ghostlyWailAnim   = null;
     trapContext    = null;
     soilContext    = null;
     for (const t of placedTraps) { t.revealed = false; t.active = true; t.cooldownTimer = 0; }
@@ -1201,6 +1261,10 @@ function update(dt) {
   for (const h of healAnims) h.life -= dt;
   healAnims = healAnims.filter(h => h.life > 0);
   if (lhAOEAnim) { lhAOEAnim.life -= dt; if (lhAOEAnim.life <= 0) lhAOEAnim = null; }
+  for (const s of spiritSiphonAnims) s.life -= dt;
+  spiritSiphonAnims = spiritSiphonAnims.filter(s => s.life > 0);
+  if (spectralGraspAnim) { spectralGraspAnim.life -= dt; if (spectralGraspAnim.life <= 0) spectralGraspAnim = null; }
+  if (ghostlyWailAnim)   { ghostlyWailAnim.life   -= dt; if (ghostlyWailAnim.life   <= 0) ghostlyWailAnim   = null; }
   for (const trap of placedTraps) {
     if (trap.cooldownTimer > 0) {
       trap.cooldownTimer -= dt;
@@ -1215,8 +1279,8 @@ function update(dt) {
     for (const crop of Object.values(crops)) crop.plantTime += dt * 1000;
   }
 
-  // Goblin: slow out-of-combat HP regen (paused while carrying heart)
-  if (player.race === 'goblin' && !heartCarried) {
+  // Goblin / Spirit: slow out-of-combat HP regen (paused while carrying heart)
+  if ((player.race === 'goblin' || player.race === 'spirit') && !heartCarried) {
     if (player.combatTimer > 0) player.combatTimer -= dt;
     else if (player.hp < player.maxHp) {
       player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.015 * dt);
@@ -1410,6 +1474,7 @@ function updateAdventurers(dt) {
     if (a.flash > 0)          a.flash          -= dt;
     if (a.aggroTimer > 0)     a.aggroTimer     -= dt;
     if (a.webSlowTimer > 0)   a.webSlowTimer   -= dt;
+    if (a.stunTimer > 0)      a.stunTimer      -= dt;
     a.isHealing = false;
     if (a.burnTimer > 0) {
       a.burnTimer     -= dt;
@@ -1454,8 +1519,9 @@ function updateAdventurers(dt) {
     );
     const qsAdvMult = _qsAdv ? 0.6 : 1.0; // 40% speed reduction
 
-    // Trap flee (fart mushroom)
+    // Stun (Spectral Grasp)
     let skipPath = false;
+    if (a.stunTimer > 0) skipPath = true;
     if (a.fartFlee) {
       a.fartFleeTimer -= dt;
       if (a.fartFleeTimer <= 0) {
@@ -1582,7 +1648,8 @@ function updateAdventurers(dt) {
           a.pathIdx++;
         } else {
           let nx = pdx/pdist, ny = pdy/pdist;
-          let spd = a.speed * ((a.webSlowTimer > 0 || inHeavensWake(a.x+16, a.y+16)) ? 0.5 : 1.0) * qsAdvMult, ex = 0, ey = 0;
+          const veilSlow = (player.raceSkill === 'spiritRace' && Math.hypot((a.x+16)-(player.x+16),(a.y+16)-(player.y+16)) <= TILE*2) ? 0.9 : 1.0;
+          let spd = a.speed * ((a.webSlowTimer > 0 || inHeavensWake(a.x+16, a.y+16)) ? 0.5 : 1.0) * qsAdvMult * veilSlow, ex = 0, ey = 0;
           a.bobPhase += dt * 8;
           const t2    = advTarget();
           const tdx   = (t2.gx*TILE+16) - (a.x+16);
@@ -1774,11 +1841,15 @@ function updateAdventurers(dt) {
     }
 
     // Attack player or heart (ranger is ranged-only — no melee)
-    a.atkCd -= dt;
-    if (a.atkCd <= 0) {
+    if (a.stunTimer <= 0) a.atkCd -= dt;
+    if (a.atkCd <= 0 && a.stunTimer <= 0) {
       let atk = false;
       const dp = Math.hypot((player.x+16)-(a.x+16), (player.y+16)-(a.y+16));
       if (dp < 44 && player.iframes <= 0 && a.cls !== 'cleric' && a.cls !== 'ranger') {
+        if (player.raceSkill === 'spiritRace' && Math.random() < 0.20) {
+          a.atkCd = a.atkCdMax; atk = true;
+          burst(player.x+16, player.y+16, ['#c8ddff','#aabbff','#ffffff'], 4);
+        } else {
         player.hp          = Math.max(0, player.hp - Math.max(1, a.dmg - playerEffDef()));
         player.iframes     = 0.5;
         player.combatTimer = 5;
@@ -1791,6 +1862,7 @@ function updateAdventurers(dt) {
           player.kbX = (kdx/kln) * 500;
           player.kbY = (kdy/kln) * 500;
         }
+        } // end else (not a miss)
       }
       if (!atk && heart && a.cls !== 'ranger' && a.cls !== 'cleric') {
         const dh = Math.hypot((heart.x+16)-(a.x+16), (heart.y+16)-(a.y+16));
@@ -1958,12 +2030,12 @@ function updateFranticCharge(dt) {
   } else if (canMove(player.x, player.y + my, 32, 32)) {
     player.y += my;
   }
-  const dps = Math.round(playerEffAtk() / player.atkCdMax);
+  const chargeDmg = Math.round(playerEffAtk());
   for (const a of adventurers) {
     if (!a.alive || fc.hit.has(a)) continue;
     if (Math.hypot((a.x+16)-(player.x+16), (a.y+16)-(player.y+16)) < 28) {
       fc.hit.add(a);
-      a.hp -= dps;
+      a.hp -= chargeDmg;
       a.flash = 0.15;
       const kdx = (a.x+16)-(player.x+16), kdy = (a.y+16)-(player.y+16);
       const kln = Math.hypot(kdx, kdy) || 1;
@@ -2031,7 +2103,7 @@ function updateHeavensWake(dt) {
     // Damage tick
     while (hw.damageTimer >= HW_DMG_TICK) {
       hw.damageTimer -= HW_DMG_TICK;
-      const tickDmg = Math.max(1, Math.round(playerEffAtk() / player.atkCdMax * HW_DMG_MULT));
+      const tickDmg = Math.max(1, Math.round(playerEffAtk() * HW_DMG_MULT));
       for (const a of adventurers) {
         if (!a.alive) continue;
         if (Math.hypot((a.x+16)-hw.cx, (a.y+16)-hw.cy) <= HW_RADIUS) {
@@ -2131,8 +2203,7 @@ function updateFireboltCast(dt) {
     const px = player.x + 16, py = player.y + 16;
     const dx = fb.cx - px, dy = fb.cy - py;
     const dist = Math.hypot(dx, dy) || 1;
-    const dps = playerEffAtk() / player.atkCdMax;
-    const dmg = Math.round(dps * FB_DMG_MULT);
+    const dmg = Math.round(playerEffAtk() * FB_DMG_MULT);
     projectiles.push({
       x: px, y: py,
       vx: (dx / dist) * FB_SPEED,
@@ -2684,6 +2755,10 @@ function updateProjectiles(dt) {
     } else {
       // Enemy arrow — hits player and heart
       if (Math.hypot((player.x+16) - p.x, (player.y+16) - p.y) < 16 && player.iframes <= 0) {
+        if (player.raceSkill === 'spiritRace' && Math.random() < 0.20) {
+          burst(player.x+16, player.y+16, ['#c8ddff','#aabbff','#ffffff'], 4);
+          p.life = 0; continue;
+        }
         player.hp          = Math.max(0, player.hp - Math.max(1, p.dmg - playerEffDef()));
         player.iframes     = 0.5;
         player.combatTimer = 5;
@@ -3002,6 +3077,11 @@ function killAdventurer(a) {
   let coinGain = a.loot;
   if (player.raceSkill === 'goblinRace') coinGain += Math.floor(a.loot * 0.1);
   coins += coinGain;
+  if (player.raceSkill === 'spiritRace') {
+    const soulHeal = Math.max(1, Math.round(player.maxHp * 0.01));
+    player.hp = Math.min(player.maxHp, player.hp + soulHeal);
+    spawnHealAnim(player.x+16, player.y+16);
+  }
   if (a.rank === 'F') fInfamy++;
   showMsg('+' + coinGain + ' coins   +1 F-Infamy (' + fInfamy + '/100)');
   burst(a.x+16, a.y+16, ['#ffd700','#ffaa22','#ff8800'], 10);
@@ -3241,6 +3321,267 @@ function goblinFlurryAttack() {
     if (a.hp<=0) killAdventurer(a);
     else burst(a.x+16,a.y+16,['#aaff22','#ccff55','#ffff44'],4);
   }
+}
+
+// ── Spirit Race skills ────────────────────────────────────────
+function spiritSiphonAttack() {
+  const px = player.x + 16, py = player.y + 16;
+  const mwx = mouse.x / cam.zoom + cam.wx, mwy = mouse.y / cam.zoom + cam.wy;
+  const aimDx = mwx - px, aimDy = mwy - py;
+  const aimLen = Math.hypot(aimDx, aimDy) || 1;
+  const aimNx = aimDx / aimLen, aimNy = aimDy / aimLen;
+  const SIPH_COS  = Math.cos(Math.PI * 100 / 360);
+  const siphDmg   = Math.round(playerEffAtk() * 0.8);
+  const angle     = Math.atan2(aimDy, aimDx);
+  const CONE_HALF = Math.PI * 50 / 180;
+  // Pre-seed stable suck particles (avoids per-frame random flickering)
+  const particles = [];
+  for (let i = 0; i < 12; i++) {
+    const a = -CONE_HALF + Math.random() * CONE_HALF * 2;
+    const r = player.atkRange * (0.25 + Math.random() * 0.75);
+    const delay = Math.random() * 0.35;
+    particles.push([a, r, delay]);
+  }
+  const anim = { angle, life: 0.35, maxLife: 0.35, hit: false, particles };
+  spiritSiphonAnims.push(anim);
+  let totalDmg = 0;
+  for (const a of adventurers) {
+    if (!a.alive) continue;
+    const dx = (a.x+16)-px, dy = (a.y+16)-py;
+    const dist = Math.hypot(dx, dy);
+    if (dist > player.atkRange) continue;
+    if ((dx/dist)*aimNx + (dy/dist)*aimNy < SIPH_COS) continue;
+    a.hp -= siphDmg; a.flash = 0.12; totalDmg += siphDmg;
+    const kl = dist || 1;
+    a.kbX = (dx/kl)*70; a.kbY = (dy/kl)*70;
+    if (a.cls==='warrior'||a.cls==='ranger'||a.cls==='rogue') { a.aggroTimer=9999; a.aggroTarget='player'; a.aggroMinion=null; a.path=null; }
+    if (a.cls==='cleric') { a.fleeing=true; a.fleeTimer=3.0; a.fleeFromX=px; a.fleeFromY=py; a.path=null; }
+    anim.hit = true;
+    if (a.hp <= 0) killAdventurer(a);
+    else burst(a.x+16, a.y+16, ['#c8ddff','#9966ff','#aabbff'], 4);
+  }
+  if (totalDmg > 0) {
+    const healAmt = Math.max(1, Math.round(totalDmg * 0.05));
+    player.hp = Math.min(player.maxHp, player.hp + healAmt);
+    spawnHealAnim(px, py);
+  }
+}
+
+function spectralGraspAttack(idx) {
+  const px = player.x + 16, py = player.y + 16;
+  const mwx = mouse.x / cam.zoom + cam.wx, mwy = mouse.y / cam.zoom + cam.wy;
+  const aimDx = mwx - px, aimDy = mwy - py;
+  const aimLen = Math.hypot(aimDx, aimDy) || 1;
+  const aimNx = aimDx / aimLen, aimNy = aimDy / aimLen;
+  const REACH = TILE * 4;
+  const GRASP_COS = Math.cos(Math.PI * 60 / 360); // 60° half-angle search cone
+  const angle = Math.atan2(aimDy, aimDx);
+  let best = null, bestDist = REACH;
+  for (const a of adventurers) {
+    if (!a.alive) continue;
+    const dx = (a.x+16)-px, dy = (a.y+16)-py;
+    const dist = Math.hypot(dx, dy);
+    if (dist > REACH) continue;
+    if (dist > 0 && (dx/dist)*aimNx + (dy/dist)*aimNy < GRASP_COS) continue;
+    if (dist < bestDist) { bestDist = dist; best = a; }
+  }
+  spectralGraspAnim = { angle, life: 0.35, maxLife: 0.35, hit: best !== null };
+  if (best) {
+    const pullDx = px - (best.x+16), pullDy = py - (best.y+16);
+    const pullLen = Math.hypot(pullDx, pullDy) || 1;
+    const pullDist = TILE * 2;
+    const nx = best.x + (pullDx/pullLen) * pullDist;
+    const ny = best.y + (pullDy/pullLen) * pullDist;
+    if (canMoveAdv(nx, best.y)) best.x = nx;
+    if (canMoveAdv(best.x, ny)) best.y = ny;
+    best.hp -= Math.round(playerEffAtk());
+    best.flash = 0.15;
+    best.stunTimer = 0.5;
+    best.kbX = 0; best.kbY = 0;
+    best.path = null;
+    burst(best.x+16, best.y+16, ['#c8ddff','#6644cc','#aabbff'], 6);
+    if (best.hp <= 0) killAdventurer(best);
+  } else {
+    showMsg('No target in range!');
+  }
+}
+
+function ghostlyWailAttack(idx) {
+  const px = player.x + 16, py = player.y + 16;
+  const mwx = mouse.x / cam.zoom + cam.wx, mwy = mouse.y / cam.zoom + cam.wy;
+  const aimDx = mwx - px, aimDy = mwy - py;
+  const aimLen = Math.hypot(aimDx, aimDy) || 1;
+  const aimNx = aimDx / aimLen, aimNy = aimDy / aimLen;
+  const WAIL_RADIUS = TILE * 3;
+  const WAIL_COS    = Math.cos(Math.PI * 100 / 360); // 50° half-angle = 100° cone, same as Goblin Snatch
+  const angle = Math.atan2(aimDy, aimDx);
+  ghostlyWailAnim = { angle, life: 0.45, maxLife: 0.45 };
+  let hit = false;
+  for (const a of adventurers) {
+    if (!a.alive) continue;
+    const dx = (a.x+16)-px, dy = (a.y+16)-py;
+    const dist = Math.hypot(dx, dy);
+    if (dist > WAIL_RADIUS) continue;
+    if (dist > 0 && (dx/dist)*aimNx + (dy/dist)*aimNy < WAIL_COS) continue;
+    a.fleeing = true; a.fleeTimer = 1.5;
+    a.fleeFromX = px; a.fleeFromY = py;
+    a.aggroTimer = 0; a.aggroTarget = null; a.aggroMinion = null;
+    a.luredByMimic = null; a.path = null;
+    const kl = dist || 1;
+    a.kbX = (dx/kl) * TILE * 2 * 8; a.kbY = (dy/kl) * TILE * 2 * 8;
+    burst(a.x+16, a.y+16, ['#c8ddff','#aabbff','#ffffff'], 5);
+    hit = true;
+  }
+  if (!hit) showMsg('No enemies in range!');
+}
+
+// ── Spirit skill draw functions ───────────────────────────────
+function drawSpiritSiphonAnims() {
+  const REACH     = player.atkRange;
+  const CONE_HALF = Math.PI * 50 / 180;
+  for (const s of spiritSiphonAnims) {
+    const progress = 1 - s.life / s.maxLife; // 0=fresh 1=done
+    const alpha = progress > 0.65 ? 1 - (progress - 0.65) / 0.35 : 1;
+    ctx.save();
+    ctx.translate(player.x + 16, player.y + 16);
+    ctx.rotate(s.angle);
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = s.hit ? '#9944ff' : '#4466cc';
+
+    // Cone fill — bright at start, fades as energy is drained inward
+    ctx.globalAlpha = alpha * Math.max(0, 0.4 - progress * 0.4);
+    ctx.fillStyle = s.hit ? 'rgba(180,100,255,0.5)' : 'rgba(100,140,255,0.35)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, REACH, -CONE_HALF, CONE_HALF);
+    ctx.closePath();
+    ctx.fill();
+
+    // Wisp particles sucked inward toward player
+    ctx.strokeStyle = s.hit ? '#cc88ff' : '#88aaff';
+    for (const [pa, pr, delay] of s.particles) {
+      const t = Math.max(0, (progress - delay) / (1 - delay));
+      if (t <= 0) continue;
+      const eased = 1 - Math.pow(1 - t, 2); // ease-in: accelerates toward center
+      const r = pr * (1 - eased);
+      const wx = Math.cos(pa) * r, wy = Math.sin(pa) * r;
+      const size = Math.max(0.5, 3.5 * (1 - eased));
+      ctx.globalAlpha = alpha * (1 - eased) * 0.85;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(wx, wy, size, 0, Math.PI * 2); ctx.stroke();
+    }
+
+    // Center absorption glow — brightens as particles arrive
+    ctx.globalAlpha = alpha * Math.min(1, progress * 1.5) * (s.hit ? 0.9 : 0.5);
+    ctx.fillStyle = s.hit ? '#dd99ff' : '#99bbff';
+    ctx.shadowBlur = 18;
+    ctx.beginPath(); ctx.arc(0, 0, 5 * Math.min(1, progress * 2), 0, Math.PI * 2); ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+function drawSpectralGraspAnim() {
+  if (!spectralGraspAnim) return;
+  const sg = spectralGraspAnim;
+  const progress = 1 - sg.life / sg.maxLife;
+  // Extend 0→0.5, hold 0.5→0.7, retract 0.7→1.0
+  let extFrac;
+  if      (progress < 0.5) extFrac = progress / 0.5;
+  else if (progress < 0.7) extFrac = 1;
+  else                      extFrac = 1 - (progress - 0.7) / 0.3;
+  const alpha  = progress > 0.75 ? 1 - (progress - 0.75) / 0.25 : 1;
+  const len    = TILE * 4 * extFrac;
+  const col    = sg.hit ? '#bb88ff' : '#6688cc';
+  const glow   = sg.hit ? '#9944ff' : '#2244aa';
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(player.x + 16, player.y + 16);
+  ctx.rotate(sg.angle);
+  ctx.strokeStyle = col; ctx.lineWidth = 3;
+  ctx.shadowBlur = 16; ctx.shadowColor = glow;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(len, 0); ctx.stroke();
+  // Ghostly hand "claw" at tip
+  if (extFrac > 0.4) {
+    const tipA = (extFrac - 0.4) / 0.6;
+    ctx.globalAlpha = alpha * tipA;
+    ctx.lineWidth = 2;
+    const claws = [[-0.4, 0.25], [0, 0.3], [0.4, 0.25]];
+    for (const [da, dr] of claws) {
+      ctx.beginPath();
+      ctx.arc(len, 0, 10, da - 0.6, da + 0.6);
+      ctx.stroke();
+    }
+  }
+  // Trailing wisp particles
+  ctx.globalAlpha = alpha * 0.3;
+  ctx.strokeStyle = '#aabbff'; ctx.lineWidth = 1;
+  ctx.shadowBlur = 6;
+  for (let i = 1; i <= 3; i++) {
+    const ox = Math.sin(progress * 12 + i) * 4;
+    const oy = Math.cos(progress * 10 + i) * 4;
+    ctx.beginPath(); ctx.arc(len * (i / 4), ox, 3, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawGhostlyWailAnim() {
+  if (!ghostlyWailAnim) return;
+  const gw = ghostlyWailAnim;
+  const progress = 1 - gw.life / gw.maxLife;
+  const alpha = progress > 0.6 ? 1 - (progress - 0.6) / 0.4 : 1;
+  const CONE_HALF = Math.PI * 50 / 180; // 50° half-angle = 100° total cone
+  const R = TILE * 3;
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.45;
+  ctx.translate(player.x + 16, player.y + 16);
+  ctx.rotate(gw.angle);
+  // Cone fill
+  ctx.fillStyle = 'rgba(180,160,255,0.18)';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.arc(0, 0, R * (0.5 + progress * 0.5), -CONE_HALF, CONE_HALF);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = alpha;
+  // Expanding concentric arcs for wave effect
+  ctx.strokeStyle = '#c8ddff';
+  ctx.shadowBlur  = 12;
+  ctx.shadowColor = '#9966ff';
+  for (let i = 0; i < 3; i++) {
+    const wave = ((progress + i * 0.33) % 1);
+    ctx.lineWidth = 2 - wave;
+    ctx.globalAlpha = alpha * (1 - wave) * 0.8;
+    ctx.beginPath();
+    ctx.arc(0, 0, R * wave, -CONE_HALF, CONE_HALF);
+    ctx.stroke();
+  }
+  // Cone edges
+  ctx.globalAlpha = alpha * 0.6;
+  ctx.strokeStyle = '#aabbff'; ctx.lineWidth = 1.5;
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.lineTo(Math.cos(-CONE_HALF)*R, Math.sin(-CONE_HALF)*R);
+  ctx.moveTo(0, 0); ctx.lineTo(Math.cos(CONE_HALF)*R,  Math.sin(CONE_HALF)*R);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawEtherealVeilAura() {
+  if (player.raceSkill !== 'spiritRace') return;
+  const t = gNow() / 1000;
+  const pulse = 0.55 + 0.45 * Math.sin(t * 2.5);
+  ctx.save();
+  ctx.globalAlpha = 0.18 * pulse;
+  ctx.strokeStyle = '#c8ddff';
+  ctx.shadowBlur  = 14;
+  ctx.shadowColor = '#8899ff';
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath(); ctx.arc(player.x+16, player.y+16, TILE * 2, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = 0.06 * pulse;
+  ctx.fillStyle   = '#aabbff';
+  ctx.beginPath(); ctx.arc(player.x+16, player.y+16, TILE * 2, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 }
 
 function uiClick(mx, my) {
@@ -3527,6 +3868,10 @@ function draw() {
   drawHealAnims();
   drawSnatchAnims();
   drawFlurryAnims();
+  drawSpiritSiphonAnims();
+  drawSpectralGraspAnim();
+  drawGhostlyWailAnim();
+  drawEtherealVeilAura();
   drawParticles();
   drawProjectiles();
   drawPlayer();
@@ -7018,6 +7363,8 @@ function drawRaceSelect() {
       ctx.fillText('— SKILLS —', cx + RS_CARD_W/2, skY);
       const displaySkills = RS_KEYS[i] === 'goblin'
         ? [...race.startSkills, 'goblinFlurry']
+        : RS_KEYS[i] === 'spirit'
+        ? [...race.startSkills, 'spiritSiphon']
         : race.startSkills;
       displaySkills.forEach((sk, si) => {
         const skill = SKILLS[sk];
