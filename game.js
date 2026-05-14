@@ -661,10 +661,11 @@ const SKILLS = {
   },
   sssHeavensWake: {
     name: "[SSS] Heaven's Wake", shortName: 'HVW',
-    desc: "Cast 1s (move interrupts). Aims at cursor. Magic circle erupts with holy rain — 100% DPS dmg/0.2s for 5s. Hits all.",
+    desc: "Cast 1s (80% slower while casting). Aims at cursor. Magic circle erupts with holy rain — 100% DPS dmg/0.2s for 5s. Hits all.",
     cooldown: 30, rank: 'SSS',
     tips: [
-      'Cast time: 1 second. Moving will cancel the cast.',
+      'Cast time: 1 second. Movement is slowed 80% while casting.',
+      'Using another skill cancels the cast.',
       'Summons holy rain at the cursor position.',
       'Damage: 100% of your DPS every 0.2 seconds.',
       'Rain duration: 5 seconds.',
@@ -674,10 +675,11 @@ const SKILLS = {
   },
   eFirebolt: {
     name: '[E] Firebolt', shortName: 'FBLT',
-    desc: 'Cast 0.5s (move interrupts). Shoots a firebolt at cursor — 2× DPS direct + 0.5% enemy max HP burn/s for 2s. 4s CD.',
+    desc: 'Cast 0.5s (80% slower while casting). Shoots a firebolt at cursor — 2× DPS direct + 0.5% enemy max HP burn/s for 2s. 4s CD.',
     cooldown: 4, rank: 'E',
     tips: [
-      'Cast time: 0.5 seconds. Moving will cancel the cast.',
+      'Cast time: 0.5 seconds. Movement is slowed 80% while casting.',
+      'Using another skill cancels the cast.',
       'Shoots a firebolt projectile toward the cursor.',
       'Direct hit damage: 200% of your DPS.',
       'Burns the target for 0.5% of their max HP per second.',
@@ -686,16 +688,16 @@ const SKILLS = {
     use(idx) { startFirebolt(idx); },
   },
   fLesserHeal: {
-    name: '[F] Lesser Heal', shortName: 'LHEAL',
-    desc: 'Cast 1s (move interrupts). Green circle bursts at cursor — heals all nearby friendlies for 10% max HP. 3s CD.',
-    cooldown: 3, rank: 'F',
+    name: '[F] Self Heal', shortName: 'SLHEAL',
+    desc: 'Channel 2s (80% slower). Heals 2.5% max HP every 0.25s. Green magic circle on you while casting. 5s CD.',
+    cooldown: 5, rank: 'F',
     tips: [
-      'Cast time: 1 second. Moving will cancel the cast.',
-      'On cast: a small green magic circle erupts at your cursor position.',
-      'All friendly units inside the circle are healed for 10% of their max HP.',
-      'Works on yourself and any minions in range.',
+      'Channel for 2 seconds — movement slowed 80% while casting.',
+      'Heals you for 2.5% of your max HP every 0.25 seconds (10 ticks = 25% total).',
+      'Green magic circle pulses on you during the channel.',
+      'Using another skill cancels the cast.',
     ],
-    use(idx) { startLesserHeal(idx); },
+    use(idx) { startSelfHeal(idx); },
   },
 };
 
@@ -976,7 +978,7 @@ const ctx = c.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
 // ── Global state ─────────────────────────────────────────────
-let grid, player, adventurers, heart, particles, projectiles, slashAnims, flurryAnims, circleAnims, heavensWake, fireboltCast, lesserHealCast, healAnims, franticCharge, goblinEscapeBoostTimer, lhAOEAnim, quickFeetTimer;
+let grid, player, adventurers, heart, particles, projectiles, slashAnims, flurryAnims, circleAnims, heavensWake, fireboltCast, lesserHealCast, selfHealCast, healAnims, franticCharge, goblinEscapeBoostTimer, lhAOEAnim, quickFeetTimer;
 let spiritSiphonAnims, spectralGraspAnim, ghostlyWailAnim;
 let slimePuddles, slimyMinions;
 let coins, food, wave, waveTarget, waveSpawned, waveDefeated, spawnTimer, waveTimer;
@@ -1029,6 +1031,7 @@ function init() {
   heavensWake    = null;
   fireboltCast   = null;
   lesserHealCast = null;
+  selfHealCast   = null;
   healAnims      = [];
   franticCharge  = null;
   goblinEscapeBoostTimer = 0;
@@ -1299,6 +1302,7 @@ function update(dt) {
     heavensWake    = null;
     fireboltCast   = null;
     lesserHealCast = null;
+    selfHealCast   = null;
     healAnims      = [];
     franticCharge  = null;
     goblinEscapeBoostTimer = 0;
@@ -1398,6 +1402,7 @@ function update(dt) {
   updateHeavensWake(dt);   // runs in both so cast/rain works outside of raids
   updateFireboltCast(dt);   // runs in both so cast works outside of raids
   updateLesserHealCast(dt); // runs in both so cast works outside of raids
+  updateSelfHealCast(dt);   // runs in both so channel works outside of raids
   updateFranticCharge(dt);  // runs in both so charge movement works outside of raids
   updateProjectiles(dt);   // runs in both so skill projectiles move outside of raids
 
@@ -1480,6 +1485,7 @@ function updateMovement(dt) {
     if (keys['KeyD']||keys['ArrowRight']) vx =  player.speed;
     if (vx && vy) { vx *= 0.707; vy *= 0.707; }
     if (inHeavensWake(player.x+16, player.y+16)) { vx *= 0.5; vy *= 0.5; }
+    if ((heavensWake && heavensWake.phase === 'casting') || fireboltCast || selfHealCast) { vx *= 0.2; vy *= 0.2; }
     if (player.raceSkill === 'goblinRace' && player.hp < player.maxHp * 0.3) { vx *= 1.25; vy *= 1.25; }
     if (goblinEscapeBoostTimer > 0) { vx *= 1.2; vy *= 1.2; goblinEscapeBoostTimer -= dt; }
     if (quickFeetTimer > 0) { vx *= 1.4; vy *= 1.4; quickFeetTimer -= dt; }
@@ -2074,6 +2080,19 @@ function useSkill(slotIdx) {
   if (!key || player.skillCds[slotIdx] > 0) return;
   const skill = SKILLS[key];
   if (!skill) return;
+  // Cancel any active cast when a different skill is used
+  if (heavensWake && heavensWake.phase === 'casting' && heavensWake.slotIdx !== slotIdx) {
+    heavensWake = null;
+    showMsg("Heaven's Wake cancelled!");
+  }
+  if (fireboltCast && fireboltCast.slotIdx !== slotIdx) {
+    fireboltCast = null;
+    showMsg('Firebolt cancelled!');
+  }
+  if (selfHealCast && selfHealCast.slotIdx !== slotIdx) {
+    selfHealCast = null;
+    showMsg('Self Heal cancelled!');
+  }
   skill.use(slotIdx);
   player.skillCds[slotIdx] = skill.cooldown;
 }
@@ -2226,13 +2245,6 @@ function updateHeavensWake(dt) {
   const hw = heavensWake;
 
   if (hw.phase === 'casting') {
-    const moving = keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD'] ||
-                   keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
-    if (moving) {
-      heavensWake = null;
-      showMsg("Heaven's Wake interrupted!");
-      return;
-    }
     hw.timer += dt;
     if (hw.timer >= HW_CAST_TIME) {
       hw.phase = 'rain';
@@ -2351,13 +2363,6 @@ function startFirebolt(idx) {
 function updateFireboltCast(dt) {
   if (!fireboltCast) return;
   const fb = fireboltCast;
-  const moving = keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD'] ||
-                 keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight'];
-  if (moving) {
-    fireboltCast = null;
-    showMsg('Firebolt interrupted!');
-    return;
-  }
   fb.timer += dt;
   if (fb.timer >= FB_CAST_TIME) {
     const px = player.x + 16, py = player.y + 16;
@@ -2429,15 +2434,85 @@ function drawFireboltCastBar() {
   ctx.textAlign = 'left';
 }
 
-// ── Lesser Heal ───────────────────────────────────────────────
-function startLesserHeal(idx) {
-  if (lesserHealCast) return;
-  lesserHealCast = {
-    timer:   0,
-    tx:      mouse.x / cam.zoom + cam.wx,
-    ty:      mouse.y / cam.zoom + cam.wy,
-    slotIdx: idx,
-  };
+// ── Self Heal ─────────────────────────────────────────────────
+const SH_CAST_TIME  = 2.0;
+const SH_TICK_TIME  = 0.25;
+const SH_TICK_PCT   = 0.025;
+
+function startSelfHeal(idx) {
+  if (selfHealCast) return;
+  selfHealCast = { timer: 0, tickTimer: 0, slotIdx: idx };
+}
+
+function updateSelfHealCast(dt) {
+  if (!selfHealCast) return;
+  const sh = selfHealCast;
+  sh.timer     += dt;
+  sh.tickTimer += dt;
+  if (sh.tickTimer >= SH_TICK_TIME) {
+    sh.tickTimer -= SH_TICK_TIME;
+    const amt = Math.max(1, Math.round(player.maxHp * SH_TICK_PCT));
+    player.hp = Math.min(player.maxHp, player.hp + amt);
+    spawnHealAnim(player.x + 16, player.y + 16);
+    burst(player.x + 16, player.y + 16, ['#00ee55', '#44ff88', '#00cc44'], 4);
+  }
+  if (sh.timer >= SH_CAST_TIME) {
+    selfHealCast = null;
+  }
+}
+
+function drawSelfHealCast() {
+  if (!selfHealCast) return;
+  const cx = player.x + 16, cy = player.y + 16;
+  const R      = 26;
+  const t      = gNow() / 1000;
+  const prog   = selfHealCast.timer / SH_CAST_TIME;
+  const pulse  = 0.6 + 0.4 * Math.sin(t * 6);
+  const rot    = t * 1.5;
+  ctx.save();
+  ctx.globalAlpha = pulse;
+  ctx.strokeStyle = '#00cc44';
+  ctx.lineWidth   = 2;
+  ctx.shadowBlur  = 12;
+  ctx.shadowColor = '#00ff66';
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, R * 0.55, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const angle = rot + (i / 3) * Math.PI * 2;
+    const tx = cx + Math.cos(angle) * R, ty = cy + Math.sin(angle) * R;
+    if (i === 0) ctx.moveTo(tx, ty); else ctx.lineTo(tx, ty);
+  }
+  ctx.closePath(); ctx.stroke();
+  ctx.beginPath();
+  for (let i = 0; i < 3; i++) {
+    const angle = -rot + (Math.PI / 3) + (i / 3) * Math.PI * 2;
+    const tx = cx + Math.cos(angle) * R, ty = cy + Math.sin(angle) * R;
+    if (i === 0) ctx.moveTo(tx, ty); else ctx.lineTo(tx, ty);
+  }
+  ctx.closePath(); ctx.stroke();
+  ctx.fillStyle  = '#00ee55';
+  ctx.shadowBlur = 6;
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawSelfHealCastBar() {
+  if (!selfHealCast) return;
+  const progress = selfHealCast.timer / SH_CAST_TIME;
+  const bw = 140, bh = 14;
+  const bx = DW / 2 - bw / 2;
+  const by = CH - 160;
+  ctx.fillStyle = '#00000099';
+  ctx.fillRect(bx - 3, by - 18, bw + 6, bh + 22);
+  ctx.fillStyle = '#ffffff'; ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center';
+  ctx.fillText('SELF HEAL', DW / 2, by - 5);
+  ctx.fillStyle = '#111100'; ctx.fillRect(bx, by, bw, bh);
+  ctx.fillStyle = '#00cc44'; ctx.fillRect(bx, by, bw * progress, bh);
+  ctx.strokeStyle = '#00aa33'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, bw, bh);
+  ctx.textAlign = 'left';
 }
 
 function updateLesserHealCast(dt) {
@@ -3337,7 +3412,7 @@ function killAdventurer(a) {
       showTopMsg('SKILL DROP: ' + SKILLS[dropped].name + '!  Open Skills menu to equip.');
     }
   }
-  // F-rank cleric: 10% chance to drop [F] Lesser Heal
+  // F-rank cleric: 10% chance to drop [F] Soft Heal
   if (a.rank === 'F' && a.cls === 'cleric' && Math.random() < 0.10) {
     const pool = ['fLesserHeal'].filter(
       sk => !player.unlockedSkills.includes(sk) && !player.slots.includes(sk)
@@ -4253,6 +4328,7 @@ function draw() {
   drawHeavensWake();
   drawFireboltCast();
   drawLesserHealCast();
+  drawSelfHealCast();
   drawLhAOEAnim();
   drawHealAnims();
   drawSnatchAnims();
@@ -4271,6 +4347,7 @@ function draw() {
   drawHeavensWakeCastBar();
   drawFireboltCastBar();
   drawLesserHealCastBar();
+  drawSelfHealCastBar();
   drawSkillBar();
   drawUI();
   if (shopOpen && !paused)                          drawShop();
