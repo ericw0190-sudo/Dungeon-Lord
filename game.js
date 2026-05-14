@@ -493,23 +493,23 @@ const SKILLS = {
   },
   slimeRace: {
     name: 'Slime', shortName: 'SLIME',
-    desc: 'Slimy Regen: constant HP regen. Fatty Weakling: +50% HP / -50% ATK. Amorphous: 15% less damage.',
+    desc: 'Slimy Regen: constant HP regen. Fatty Weakling: +50% HP / -50% ATK / -20% SPD. Amorphous: 15% less damage.',
     cooldown: 0, rank: 'base',
     tips: [
       'SLIMY REGEN — Continuously recover HP, even in combat (0.3%/s).',
-      'FATTY WEAKLING — Base HP is 50% higher but base ATK is 50% lower.',
+      'FATTY WEAKLING — Base HP is 50% higher, base ATK is 50% lower, base SPD is 20% lower.',
       'AMORPHOUS — Take 15% less damage from all enemy attacks.',
     ],
     use() {},
   },
   slimeBalls: {
     name: 'Slime Balls', shortName: 'SLMB',
-    desc: '120% ATK projectile. Slimes target (30% slow) for 1s. 0.5s CD.',
+    desc: '80% ATK projectile. Slimes target (30% slow) for 1s. 0.5s CD.',
     cooldown: 0.5, rank: 'base',
     tips: [
       'Fires a slime ball toward the cursor.',
       'Travels up to 8 tiles before vanishing.',
-      'Deals 120% of your ATK stat on hit.',
+      'Deals 80% of your ATK stat on hit.',
       'Applies Slimed: 30% slower move and attack speed for 1s.',
       'Replaces basic attack for the Slime Race.',
     ],
@@ -517,26 +517,27 @@ const SKILLS = {
   },
   acidPuddles: {
     name: 'Acid Puddle', shortName: 'ACID',
-    desc: 'Lob a slime ball to cursor tile. Spawns 3s puddle: Slimed 50% + Poison 5% HP/0.2s. 2s CD.',
-    cooldown: 2, rank: 'base',
+    desc: 'Lob a green slime ball to cursor tile. Spawns 3s green puddle: Slimed 50% + Poison 2% HP/0.2s. 3s CD.',
+    cooldown: 3, rank: 'base',
     tips: [
-      'Launches a slime ball that flies to the cursor tile, ignoring enemies.',
-      'Creates a 1-tile acid puddle lasting 3 seconds on arrival.',
+      'Launches a green slime ball toward the cursor tile, ignoring enemies on the way.',
+      'Creates a 1-tile green puddle lasting 3 seconds when it lands.',
       'Puddle applies Slimed: 50% move and attack speed slow for 3s.',
-      'Puddle applies Acid Poison: 5% max HP every 0.2s for 1s.',
+      'Puddle applies Poison: 2% max HP every 0.2s for 1s.',
     ],
     use(idx) { acidPuddlesAttack(idx); },
   },
   cellDivision: {
     name: 'Cell Division', shortName: 'CELL',
-    desc: 'Spawn 2 Slimys near you. On death each leaves a 3s slime puddle. 10s CD.',
-    cooldown: 10, rank: 'base',
+    desc: 'Spawn 2 Slimys near you. Skeleton speed, 1 HP/ATK/DEF. On death leaves a 3s slime puddle. 20s CD.',
+    cooldown: 20, rank: 'base',
     tips: [
-      'Spawns 2 Slimy minions near you with random colors.',
+      'Spawns 2 Slimy minions with random colors near you.',
+      'Slimys move at skeleton speed and have 1 HP, 1 ATK, 1 DEF.',
       'Each Slimy chases adventurers within 10 tiles.',
-      'Slimys have 1 HP — they die in one hit.',
-      'On death each leaves a slime puddle (Slimed 50% + Poison) for 3s.',
-      'Slimys vanish at the end of each wave and cannot respawn.',
+      'On death each leaves a colored slime puddle matching its color for 3s.',
+      'Puddle applies Slimed 50% slow for 3s and Poison 2% max HP/0.2s for 1s.',
+      'Slimys vanish at wave end and cannot respawn once dead.',
     ],
     use(idx) { cellDivisionAttack(idx); },
   },
@@ -908,7 +909,7 @@ const RACES = {
     name: 'SLIME',
     color: '#44ddaa',
     desc: 'A resilient gelatinous blob.',
-    traits: ['Slimy Regen: constant HP regen', 'Fatty Weakling: +50% HP / -50% ATK', 'Amorphous: 15% less damage taken'],
+    traits: ['Slimy Regen: constant HP regen', 'Fatty Weakling: +50% HP / -50% ATK / -20% SPD', 'Amorphous: 15% less damage taken'],
     sprite: SLIME_SPR,
     sprColors: SLIME_COL,
     startSkills: ['acidPuddles', 'cellDivision'],
@@ -1112,7 +1113,7 @@ function selectRace(raceName) {
   player.sprite    = race.sprite;
   player.sprColors = race.sprColors;
   if (raceName === 'spirit') player.atkDmg = Math.round(player.atkDmg * 0.8);
-  if (raceName === 'slime') { player.maxHp = Math.round(player.maxHp * 1.5); player.hp = player.maxHp; player.atkDmg = Math.round(player.atkDmg * 0.5); }
+  if (raceName === 'slime') { player.maxHp = Math.round(player.maxHp * 1.5); player.hp = player.maxHp; player.atkDmg = Math.round(player.atkDmg * 0.5); player.speed = Math.round(player.speed * 0.8); }
   let slotIdx = 0;
   for (const sk of race.startSkills) {
     if (slotIdx < 4) player.slots[slotIdx++] = sk;
@@ -1185,6 +1186,14 @@ function getTrapAvoidSet() {
   const s = new Set();
   for (const t of placedTraps) {
     if (t.revealed && t.active) s.add(t.gx + ',' + t.gy);
+  }
+  return s.size ? s : null;
+}
+
+function getSlimePuddleAvoidSet() {
+  const s = new Set();
+  for (const p of slimePuddles) {
+    s.add(Math.floor(p.wx / TILE) + ',' + Math.floor(p.wy / TILE));
   }
   return s.size ? s : null;
 }
@@ -1713,8 +1722,15 @@ function updateAdventurers(dt) {
         const agx = Math.floor((a.x+16)/TILE);
         const agy = Math.floor((a.y+16)/TILE);
         const trapAvoid = getTrapAvoidSet();
-        let p = trapAvoid ? bfs(agx, agy, ptgx, ptgy, trapAvoid) : bfs(agx, agy, ptgx, ptgy);
-        if (p === null && trapAvoid) p = bfs(agx, agy, ptgx, ptgy); // fallback: walk through if no other route
+        const puddleAvoid = getSlimePuddleAvoidSet();
+        let avoidSet = null;
+        if (trapAvoid && puddleAvoid) {
+          avoidSet = new Set([...trapAvoid, ...puddleAvoid]);
+        } else {
+          avoidSet = trapAvoid || puddleAvoid;
+        }
+        let p = avoidSet ? bfs(agx, agy, ptgx, ptgy, avoidSet) : bfs(agx, agy, ptgx, ptgy);
+        if (p === null && avoidSet) p = bfs(agx, agy, ptgx, ptgy); // fallback: walk through if no other route
         if (p !== null) { a.path = p; a.pathIdx = 0; }
         a.pathT = 0.7 + Math.random() * 0.5;
       }
@@ -1774,6 +1790,25 @@ function updateAdventurers(dt) {
               if (a.leapCd > 0) a.leapCd -= dt;
               const lpx = (a.x+16)-(player.x+16), lpy = (a.y+16)-(player.y+16);
               const lpdist = Math.hypot(lpx, lpy);
+              // F-rank ranger: leap out of slime puddles
+              if (a.rank === 'F' && a.leapCd <= 0) {
+                const agxR = Math.floor((a.x+16)/TILE), agyR = Math.floor((a.y+16)/TILE);
+                const onPuddle = slimePuddles.some(sp =>
+                  Math.floor(sp.wx/TILE) === agxR && Math.floor(sp.wy/TILE) === agyR
+                );
+                if (onPuddle) {
+                  const puddle = slimePuddles.find(sp =>
+                    Math.floor(sp.wx/TILE) === agxR && Math.floor(sp.wy/TILE) === agyR
+                  );
+                  const pcx = puddle.wx + TILE/2, pcy = puddle.wy + TILE/2;
+                  const fdx = (a.x+16) - pcx, fdy = (a.y+16) - pcy;
+                  const flen = Math.hypot(fdx, fdy) || 1;
+                  a.kbX = (fdx/flen) * 1400;
+                  a.kbY = (fdy/flen) * 1400;
+                  a.leapCd = 2.5;
+                  burst(a.x+16, a.y+16, ['#88ff44','#44cc00'], 8);
+                }
+              }
               if (a.leapCd <= 0) {
                 const agx = Math.floor((a.x+16)/TILE), agy = Math.floor((a.y+16)/TILE);
                 const sameTile = agx === Math.floor((player.x+16)/TILE) && agy === Math.floor((player.y+16)/TILE);
@@ -1975,7 +2010,7 @@ function updateAdventurers(dt) {
           if (!sm.alive) continue;
           const dms = Math.hypot((sm.x+12)-(a.x+16), (sm.y+12)-(a.y+16));
           if (dms < 36) {
-            sm.hp -= Math.max(1, a.dmg);
+            sm.hp -= Math.max(1, a.dmg - (sm.def || 0));
             sm.flash = 0.15;
             a.atkCd = a.atkCdMax; atk = true;
             burst(sm.x+12, sm.y+12, [sm.color, '#ffffff'], 4);
@@ -3583,7 +3618,7 @@ function slimeBallsAttack(idx) {
   projectiles.push({
     x: px, y: py,
     vx: (dx / dist) * spd, vy: (dy / dist) * spd,
-    dmg: Math.round(playerEffAtk() * 1.2),
+    dmg: Math.round(playerEffAtk() * 0.8),
     life: range / spd,
     owner: 'player_slimeBall',
   });
@@ -3614,8 +3649,8 @@ function cellDivisionAttack(idx) {
     slimyMinions.push({
       x: player.x + 16 + ox - 12,
       y: player.y + 4,
-      hp: 1, maxHp: 1, atk: 1,
-      speed: 120,
+      hp: 1, maxHp: 1, atk: 1, def: 1,
+      speed: 40,
       atkCd: 0, atkCdMax: 1.5,
       alive: true,
       color: col,
@@ -3675,7 +3710,7 @@ function updateSlimePuddles(dt) {
         a.slimedTimer = 3.0;
         if (a.acidTimer <= 0) {
           a.acidTimer     = 1.0;
-          a.acidDmg       = Math.max(1, Math.round(a.maxHp * 0.05));
+          a.acidDmg       = Math.max(1, Math.round(a.maxHp * 0.02));
           a.acidTickTimer = 0.2;
         }
       }
