@@ -280,17 +280,17 @@ const MINION_SPRS = {
     s: [
       [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
       [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-      [0,0,1,1,1,1,4,1,1,4,1,1,1,1,0,0],
+      [2,2,1,1,1,4,4,1,1,4,4,1,1,1,2,2],  // 4 eyes (cols 5,6,9,10) + leg pair A
+      [0,2,1,1,1,1,4,1,1,4,1,1,1,1,2,0],  // 2 eyes (cols 6,9) + leg pair A
       [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
       [0,0,1,1,5,1,1,1,1,1,1,5,1,1,0,0],
       [0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0],
-      [0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0],
-      [2,2,0,0,1,1,1,1,1,1,1,1,0,0,2,2],
+      [2,2,0,0,1,1,1,1,1,1,1,1,0,0,2,2],  // leg pair B
       [0,2,2,0,1,1,1,1,1,1,1,1,0,2,2,0],
-      [0,0,2,1,1,3,1,1,1,1,3,1,1,2,0,0],
-      [0,2,2,0,1,1,1,1,1,1,1,1,0,2,2,0],
+      [0,0,2,1,1,3,1,1,1,1,3,1,1,2,0,0],  // fangs + B/C joint
+      [0,2,2,0,1,1,1,1,1,1,1,1,0,2,2,0],  // leg pair C
       [2,2,0,0,1,1,1,1,1,1,1,1,0,0,2,2],
-      [0,2,0,0,0,1,1,1,1,1,1,0,0,0,2,0],
+      [0,2,0,0,0,1,1,1,1,1,1,0,0,0,2,0],  // leg pair D
       [0,0,2,0,0,0,1,1,1,1,0,0,0,2,0,0],
       [0,0,0,2,0,0,0,1,1,0,0,0,2,0,0,0],
       [0,0,0,0,2,0,0,0,0,0,0,2,0,0,0,0],
@@ -490,6 +490,55 @@ const SKILLS = {
       'COMRADERY — Goblin minions cost 50% less to purchase.',
     ],
     use() {},
+  },
+  slimeRace: {
+    name: 'Slime', shortName: 'SLIME',
+    desc: 'Slimy Regen: constant HP regen. Fatty Weakling: +50% HP / -50% ATK. Amorphous: 15% less damage.',
+    cooldown: 0, rank: 'base',
+    tips: [
+      'SLIMY REGEN — Continuously recover HP, even in combat (0.3%/s).',
+      'FATTY WEAKLING — Base HP is 50% higher but base ATK is 50% lower.',
+      'AMORPHOUS — Take 15% less damage from all enemy attacks.',
+    ],
+    use() {},
+  },
+  slimeBalls: {
+    name: 'Slime Balls', shortName: 'SLMB',
+    desc: '120% ATK projectile. Slimes target (30% slow) for 1s. 0.5s CD.',
+    cooldown: 0.5, rank: 'base',
+    tips: [
+      'Fires a slime ball toward the cursor.',
+      'Travels up to 8 tiles before vanishing.',
+      'Deals 120% of your ATK stat on hit.',
+      'Applies Slimed: 30% slower move and attack speed for 1s.',
+      'Replaces basic attack for the Slime Race.',
+    ],
+    use(idx) { slimeBallsAttack(idx); },
+  },
+  acidPuddles: {
+    name: 'Acid Puddle', shortName: 'ACID',
+    desc: 'Lob a slime ball to cursor tile. Spawns 3s puddle: Slimed 50% + Poison 5% HP/0.2s. 2s CD.',
+    cooldown: 2, rank: 'base',
+    tips: [
+      'Launches a slime ball that flies to the cursor tile, ignoring enemies.',
+      'Creates a 1-tile acid puddle lasting 3 seconds on arrival.',
+      'Puddle applies Slimed: 50% move and attack speed slow for 3s.',
+      'Puddle applies Acid Poison: 5% max HP every 0.2s for 1s.',
+    ],
+    use(idx) { acidPuddlesAttack(idx); },
+  },
+  cellDivision: {
+    name: 'Cell Division', shortName: 'CELL',
+    desc: 'Spawn 2 Slimys near you. On death each leaves a 3s slime puddle. 10s CD.',
+    cooldown: 10, rank: 'base',
+    tips: [
+      'Spawns 2 Slimy minions near you with random colors.',
+      'Each Slimy chases adventurers within 10 tiles.',
+      'Slimys have 1 HP — they die in one hit.',
+      'On death each leaves a slime puddle (Slimed 50% + Poison) for 3s.',
+      'Slimys vanish at the end of each wave and cannot respawn.',
+    ],
+    use(idx) { cellDivisionAttack(idx); },
   },
   spiritRace: {
     name: 'Spirit', shortName: 'SPRIT',
@@ -859,11 +908,11 @@ const RACES = {
     name: 'SLIME',
     color: '#44ddaa',
     desc: 'A resilient gelatinous blob.',
-    traits: ['Coming soon...'],
+    traits: ['Slimy Regen: constant HP regen', 'Fatty Weakling: +50% HP / -50% ATK', 'Amorphous: 15% less damage taken'],
     sprite: SLIME_SPR,
     sprColors: SLIME_COL,
-    startSkills: [],
-    comingSoon: true,
+    startSkills: ['acidPuddles', 'cellDivision'],
+    comingSoon: false,
   },
 };
 
@@ -927,6 +976,7 @@ ctx.imageSmoothingEnabled = false;
 // ── Global state ─────────────────────────────────────────────
 let grid, player, adventurers, heart, particles, projectiles, slashAnims, flurryAnims, circleAnims, heavensWake, fireboltCast, lesserHealCast, healAnims, franticCharge, goblinEscapeBoostTimer, lhAOEAnim, quickFeetTimer;
 let spiritSiphonAnims, spectralGraspAnim, ghostlyWailAnim;
+let slimePuddles, slimyMinions;
 let coins, food, wave, waveTarget, waveSpawned, waveDefeated, spawnTimer, waveTimer;
 let gameState, placeMode, keys, mouse, flash, flashT, flashTop, flashTopT, focused;
 let ctInv, sInv, crops, shopOpen, shopTab, skillMenuOpen, pendingSkill, paused, pauseStart;
@@ -985,6 +1035,8 @@ function init() {
   spiritSiphonAnims = [];
   spectralGraspAnim = null;
   ghostlyWailAnim   = null;
+  slimePuddles      = [];
+  slimyMinions      = [];
 
   coins       = 600;
   food        = 10;
@@ -1056,15 +1108,16 @@ function selectRace(raceName) {
   if (!race || race.comingSoon) return;
   init(); // resets state; gameState becomes 'raceSelect', then overridden below
   player.race      = raceName;
-  player.raceSkill = raceName === 'goblin' ? 'goblinRace' : raceName === 'spirit' ? 'spiritRace' : null;
+  player.raceSkill = raceName === 'goblin' ? 'goblinRace' : raceName === 'spirit' ? 'spiritRace' : raceName === 'slime' ? 'slimeRace' : null;
   player.sprite    = race.sprite;
   player.sprColors = race.sprColors;
   if (raceName === 'spirit') player.atkDmg = Math.round(player.atkDmg * 0.8);
+  if (raceName === 'slime') { player.maxHp = Math.round(player.maxHp * 1.5); player.hp = player.maxHp; player.atkDmg = Math.round(player.atkDmg * 0.5); }
   let slotIdx = 0;
   for (const sk of race.startSkills) {
     if (slotIdx < 4) player.slots[slotIdx++] = sk;
   }
-  player.slots[4] = player.race === 'goblin' ? 'goblinFlurry' : player.race === 'spirit' ? 'spiritSiphon' : 'basicAttack';
+  player.slots[4] = player.race === 'goblin' ? 'goblinFlurry' : player.race === 'spirit' ? 'spiritSiphon' : player.race === 'slime' ? 'slimeBalls' : 'basicAttack';
   gameState = 'build';
 }
 
@@ -1192,6 +1245,8 @@ function spawnAdventurer() {
     dashTimer: cls === 'rogue' ? 1.0 + Math.random() * 2.0 : 0, dashPhase: true,
     webSlowTimer: 0,
     stunTimer: 0,
+    slimedTimer: 0, slimedAmt: 1.0,
+    acidTimer: 0, acidDmg: 0, acidTickTimer: 0,
     burnTimer: 0, burnDmg: 0, burnTickTimer: 0,
     isHealing: false,
     luredByMimic: null,
@@ -1242,6 +1297,8 @@ function update(dt) {
     spiritSiphonAnims = [];
     spectralGraspAnim = null;
     ghostlyWailAnim   = null;
+    slimePuddles      = [];
+    slimyMinions      = [];
     trapContext    = null;
     soilContext    = null;
     for (const t of placedTraps) { t.revealed = false; t.active = true; t.cooldownTimer = 0; }
@@ -1286,6 +1343,11 @@ function update(dt) {
       player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.015 * dt);
     }
   }
+  // Slime: constant regen even in combat (0.3%/s)
+  if (player.race === 'slime' && player.hp < player.maxHp) {
+    player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.003 * dt);
+  }
+
 
   // Hunger: consume (5 × level + minion upkeep) food every 60s
   hungerTimer -= dt;
@@ -1320,6 +1382,8 @@ function update(dt) {
   }
 
   updateMinions(dt);      // runs in both build and combat
+  updateSlimyMinions(dt);
+  updateSlimePuddles(dt);
   if (heart) updateSkillCds(dt);
   updateHeavensWake(dt);   // runs in both so cast/rain works outside of raids
   updateFireboltCast(dt);   // runs in both so cast works outside of raids
@@ -1357,6 +1421,11 @@ function update(dt) {
       heavensWake  = null;
       fireboltCast = null;
       for (const t of placedTraps) { if (t.type !== 'emberbolt') t.revealed = false; t.active = true; t.cooldownTimer = 0; }
+      if (heart && heart.hp < heart.maxHp) {
+        heart.hp = Math.min(heart.maxHp, heart.hp + heart.maxHp * 0.10);
+      }
+      slimePuddles = [];
+      slimyMinions = [];
       // F-rank: 50% chance to grow party size each cleared wave (max 6)
       if (dungeonRank === 0 && fPartySize < 6 && Math.random() < 0.5) {
         fPartySize++;
@@ -1475,6 +1544,7 @@ function updateAdventurers(dt) {
     if (a.aggroTimer > 0)     a.aggroTimer     -= dt;
     if (a.webSlowTimer > 0)   a.webSlowTimer   -= dt;
     if (a.stunTimer > 0)      a.stunTimer      -= dt;
+    if (a.slimedTimer > 0)    a.slimedTimer    -= dt;
     a.isHealing = false;
     if (a.burnTimer > 0) {
       a.burnTimer     -= dt;
@@ -1495,6 +1565,17 @@ function updateAdventurers(dt) {
         a.hp -= a.poisonDmg;
         a.flash = 0.08;
         burst(a.x+16, a.y+16, ['#44cc22','#66ee33','#22aa11'], 2);
+        if (a.hp <= 0) killAdventurer(a);
+      }
+    }
+    if (a.acidTimer > 0) {
+      a.acidTimer     -= dt;
+      a.acidTickTimer -= dt;
+      if (a.acidTickTimer <= 0) {
+        a.acidTickTimer = 0.2;
+        a.hp -= a.acidDmg;
+        a.flash = 0.08;
+        burst(a.x+16, a.y+16, ['#22cc44','#44ff66','#00aa22'], 2);
         if (a.hp <= 0) killAdventurer(a);
       }
     }
@@ -1649,7 +1730,8 @@ function updateAdventurers(dt) {
         } else {
           let nx = pdx/pdist, ny = pdy/pdist;
           const veilSlow = (player.raceSkill === 'spiritRace' && Math.hypot((a.x+16)-(player.x+16),(a.y+16)-(player.y+16)) <= TILE*2) ? 0.9 : 1.0;
-          let spd = a.speed * ((a.webSlowTimer > 0 || inHeavensWake(a.x+16, a.y+16)) ? 0.5 : 1.0) * qsAdvMult * veilSlow, ex = 0, ey = 0;
+          const slimedMult = a.slimedTimer > 0 ? a.slimedAmt : 1.0;
+          let spd = a.speed * ((a.webSlowTimer > 0 || inHeavensWake(a.x+16, a.y+16)) ? 0.5 : 1.0) * qsAdvMult * veilSlow * slimedMult, ex = 0, ey = 0;
           a.bobPhase += dt * 8;
           const t2    = advTarget();
           const tdx   = (t2.gx*TILE+16) - (a.x+16);
@@ -1841,7 +1923,7 @@ function updateAdventurers(dt) {
     }
 
     // Attack player or heart (ranger is ranged-only — no melee)
-    if (a.stunTimer <= 0) a.atkCd -= dt;
+    if (a.stunTimer <= 0) a.atkCd -= dt * (a.slimedTimer > 0 ? a.slimedAmt : 1.0);
     if (a.atkCd <= 0 && a.stunTimer <= 0) {
       let atk = false;
       const dp = Math.hypot((player.x+16)-(a.x+16), (player.y+16)-(a.y+16));
@@ -1850,7 +1932,9 @@ function updateAdventurers(dt) {
           a.atkCd = a.atkCdMax; atk = true;
           burst(player.x+16, player.y+16, ['#c8ddff','#aabbff','#ffffff'], 4);
         } else {
-        player.hp          = Math.max(0, player.hp - Math.max(1, a.dmg - playerEffDef()));
+        const _mRaw = Math.max(1, a.dmg - playerEffDef());
+        const _mDmg = player.raceSkill === 'slimeRace' ? Math.max(1, Math.round(_mRaw * 0.85)) : _mRaw;
+        player.hp          = Math.max(0, player.hp - _mDmg);
         player.iframes     = 0.5;
         player.combatTimer = 5;
         a.atkCd            = a.atkCdMax;
@@ -1882,6 +1966,23 @@ function updateAdventurers(dt) {
             a.atkCd = a.atkCdMax;
             burst(_mhx, _mhy, ['#ff4444','#ff8844'], 3);
             if (m.hp <= 0) killMinion(m);
+            break;
+          }
+        }
+      }
+      if (!atk && a.cls !== 'cleric' && a.cls !== 'ranger') {
+        for (const sm of slimyMinions) {
+          if (!sm.alive) continue;
+          const dms = Math.hypot((sm.x+12)-(a.x+16), (sm.y+12)-(a.y+16));
+          if (dms < 36) {
+            sm.hp -= Math.max(1, a.dmg);
+            sm.flash = 0.15;
+            a.atkCd = a.atkCdMax; atk = true;
+            burst(sm.x+12, sm.y+12, [sm.color, '#ffffff'], 4);
+            if (sm.hp <= 0) {
+              sm.alive = false;
+              spawnSlimePuddle(sm.x + 12, sm.y + 12, sm.color);
+            }
             break;
           }
         }
@@ -2664,6 +2765,32 @@ function updateProjectiles(dt) {
           break;
         }
       }
+    } else if (p.owner === 'player_slimeBall') {
+      for (const a of adventurers) {
+        if (!a.alive) continue;
+        if (Math.hypot((a.x+16) - p.x, (a.y+16) - p.y) < 20) {
+          a.hp -= p.dmg;
+          a.flash = 0.12;
+          if (a.slimedTimer <= 0 || a.slimedAmt > 0.7) a.slimedAmt = 0.7;
+          a.slimedTimer = Math.max(a.slimedTimer, 1.0);
+          burst(p.x, p.y, ['#22ddaa','#44ffcc','#00bb88'], 6);
+          p.life = 0;
+          if (a.hp <= 0) killAdventurer(a);
+          else {
+            if (a.cls === 'warrior' || a.cls === 'ranger' || a.cls === 'rogue') {
+              a.aggroTimer = 9999; a.aggroTarget = 'player'; a.aggroMinion = null; a.path = null;
+            }
+            if (a.cls === 'cleric') { a.fleeing = true; a.fleeTimer = 3.0; a.fleeFromX = player.x+16; a.fleeFromY = player.y+16; a.path = null; }
+          }
+          break;
+        }
+      }
+    } else if (p.owner === 'player_acidPuddle') {
+      if (Math.hypot(p.targetX - p.x, p.targetY - p.y) < 20) {
+        spawnSlimePuddle(p.targetX, p.targetY, '#22cc44');
+        burst(p.targetX, p.targetY, ['#22cc44','#44ff66','#00aa22','#88ffaa'], 8);
+        p.life = 0;
+      }
     } else if (p.owner === 'player_firebolt') {
       for (const a of adventurers) {
         if (!a.alive) continue;
@@ -2759,7 +2886,9 @@ function updateProjectiles(dt) {
           burst(player.x+16, player.y+16, ['#c8ddff','#aabbff','#ffffff'], 4);
           p.life = 0; continue;
         }
-        player.hp          = Math.max(0, player.hp - Math.max(1, p.dmg - playerEffDef()));
+        const _aRaw = Math.max(1, p.dmg - playerEffDef());
+        const _aDmg = player.raceSkill === 'slimeRace' ? Math.max(1, Math.round(_aRaw * 0.85)) : _aRaw;
+        player.hp          = Math.max(0, player.hp - _aDmg);
         player.iframes     = 0.5;
         player.combatTimer = 5;
         burst(p.x, p.y, ['#ff4444','#ff8844'], 5);
@@ -2965,7 +3094,7 @@ function dungeonBuildClick(mx, my) {
   } else if (placeMode && placeMode.startsWith('minion_')) {
     const type = placeMode.slice(7);
     if (type === 'giantSpider') {
-      const ok = [[wgx,wgy],[wgx+1,wgy],[wgx,wgy+1],[wgx+1,wgy+1]]
+      const ok = [[lgx,lgy],[lgx+1,lgy],[lgx,lgy+1],[lgx+1,lgy+1]]
         .every(([x,y]) => tgrid[y] && tgrid[y][x] === T_FLOOR);
       if (!ok) { showMsg('Need 2×2 floor tiles for Giant Spider!'); return; }
       if (placedMinions.some(m => m.gx===wgx && m.gy===wgy)) { showMsg('A minion is already there!'); return; }
@@ -3435,6 +3564,157 @@ function ghostlyWailAttack(idx) {
   if (!hit) showMsg('No enemies in range!');
 }
 
+// ── Slime Race skill functions ────────────────────────────────
+const SLIMY_COLORS = ['#88ff44','#ff6622','#22aaff','#ff22cc','#ffdd22','#22ddff','#ff4488','#aaff00'];
+
+function spawnSlimePuddle(wx, wy, color) {
+  const gx = Math.floor(wx / TILE) * TILE;
+  const gy = Math.floor(wy / TILE) * TILE;
+  slimePuddles.push({ wx: gx, wy: gy, life: 3.0, maxLife: 3.0, color });
+}
+
+function slimeBallsAttack(idx) {
+  const px = player.x + 16, py = player.y + 16;
+  const wmx = mouse.x / cam.zoom + cam.wx, wmy = mouse.y / cam.zoom + cam.wy;
+  const dx = wmx - px, dy = wmy - py;
+  const dist = Math.hypot(dx, dy) || 1;
+  const spd = 420;
+  const range = TILE * 8;
+  projectiles.push({
+    x: px, y: py,
+    vx: (dx / dist) * spd, vy: (dy / dist) * spd,
+    dmg: Math.round(playerEffAtk() * 1.2),
+    life: range / spd,
+    owner: 'player_slimeBall',
+  });
+}
+
+function acidPuddlesAttack(idx) {
+  const px = player.x + 16, py = player.y + 16;
+  const wmx = mouse.x / cam.zoom + cam.wx, wmy = mouse.y / cam.zoom + cam.wy;
+  const tx = Math.floor(wmx / TILE) * TILE + TILE / 2;
+  const ty = Math.floor(wmy / TILE) * TILE + TILE / 2;
+  const dx = tx - px, dy = ty - py;
+  const distToTarget = Math.hypot(dx, dy) || 1;
+  const spd = 300;
+  projectiles.push({
+    x: px, y: py,
+    vx: (dx / distToTarget) * spd, vy: (dy / distToTarget) * spd,
+    dmg: 0,
+    life: (distToTarget / spd) + 0.5,
+    owner: 'player_acidPuddle',
+    targetX: tx, targetY: ty,
+  });
+}
+
+function cellDivisionAttack(idx) {
+  for (let i = 0; i < 2; i++) {
+    const ox = (i === 0 ? -1 : 1) * (TILE + 4);
+    const col = SLIMY_COLORS[Math.floor(Math.random() * SLIMY_COLORS.length)];
+    slimyMinions.push({
+      x: player.x + 16 + ox - 12,
+      y: player.y + 4,
+      hp: 1, maxHp: 1, atk: 1,
+      speed: 120,
+      atkCd: 0, atkCdMax: 1.5,
+      alive: true,
+      color: col,
+      bobPhase: Math.random() * Math.PI * 2,
+      flash: 0,
+      kbX: 0, kbY: 0,
+    });
+  }
+}
+
+function updateSlimyMinions(dt) {
+  for (const m of slimyMinions) {
+    if (!m.alive) continue;
+    m.bobPhase += dt * 6;
+    if (m.flash > 0) m.flash -= dt;
+    if (m.kbX || m.kbY) {
+      const nx = m.x + m.kbX * dt, ny = m.y + m.kbY * dt;
+      if (canMove(nx, m.y, 24, 24)) m.x = nx; else m.kbX = 0;
+      if (canMove(m.x, ny, 24, 24)) m.y = ny; else m.kbY = 0;
+      m.kbX *= (1 - dt * 12); m.kbY *= (1 - dt * 12);
+      if (Math.abs(m.kbX) < 5) m.kbX = 0;
+      if (Math.abs(m.kbY) < 5) m.kbY = 0;
+    }
+    let bestDist = TILE * 10 + 1, best = null;
+    for (const a of adventurers) {
+      if (!a.alive) continue;
+      const d = Math.hypot((a.x+16)-(m.x+12),(a.y+16)-(m.y+12));
+      if (d < bestDist) { bestDist = d; best = a; }
+    }
+    if (best && bestDist > 28) {
+      const ddx = (best.x+16)-(m.x+12), ddy = (best.y+16)-(m.y+12);
+      const dl = Math.hypot(ddx, ddy) || 1;
+      const nx = m.x + (ddx/dl)*m.speed*dt, ny = m.y + (ddy/dl)*m.speed*dt;
+      if (canMove(nx, m.y, 24, 24)) m.x = nx;
+      if (canMove(m.x, ny, 24, 24)) m.y = ny;
+    }
+    if (m.atkCd > 0) m.atkCd -= dt;
+    if (best && bestDist < 28 && m.atkCd <= 0) {
+      best.hp -= m.atk;
+      best.flash = 0.08;
+      m.atkCd = m.atkCdMax;
+      if (best.hp <= 0) killAdventurer(best);
+    }
+  }
+  slimyMinions = slimyMinions.filter(m => m.alive);
+}
+
+function updateSlimePuddles(dt) {
+  for (const p of slimePuddles) p.life -= dt;
+  slimePuddles = slimePuddles.filter(p => p.life > 0);
+  for (const p of slimePuddles) {
+    for (const a of adventurers) {
+      if (!a.alive) continue;
+      const ax = a.x + 16, ay = a.y + 16;
+      if (ax >= p.wx && ax < p.wx + TILE && ay >= p.wy && ay < p.wy + TILE) {
+        a.slimedAmt   = Math.min(a.slimedAmt, 0.5);
+        a.slimedTimer = 3.0;
+        if (a.acidTimer <= 0) {
+          a.acidTimer     = 1.0;
+          a.acidDmg       = Math.max(1, Math.round(a.maxHp * 0.05));
+          a.acidTickTimer = 0.2;
+        }
+      }
+    }
+  }
+}
+
+function drawSlimePuddles() {
+  const t = gNow() / 1000;
+  for (const p of slimePuddles) {
+    const alpha = 0.5 + 0.15 * Math.sin(t * 3 + p.wx * 0.1);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.wx, p.wy, TILE, TILE);
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = '#ffffff44';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(p.wx + 2, p.wy + 2, TILE - 4, TILE - 4);
+    ctx.globalAlpha = 1;
+    const lifeFrac = p.life / 3.0;
+    ctx.fillStyle = p.color + '88';
+    ctx.fillRect(p.wx, p.wy + TILE - 3, TILE * lifeFrac, 3);
+  }
+}
+
+function drawSlimyMinions() {
+  for (const m of slimyMinions) {
+    if (!m.alive) continue;
+    const bob = Math.sin(m.bobPhase) * 1.5;
+    const dx = Math.round(m.x), dy = Math.round(m.y + bob);
+    ctx.globalAlpha = m.flash > 0 ? 0.4 : 1;
+    const slimyCol = { 1: m.color, 2: '#112211', 3: '#ffffff' };
+    sprS(SLIME_SPR, slimyCol, dx, dy, 2);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#111'; ctx.fillRect(dx+1, dy-5, 16, 3);
+    ctx.fillStyle = '#44ff22'; ctx.fillRect(dx+1, dy-5, 16 * (m.hp/m.maxHp), 3);
+  }
+}
+
 // ── Spirit skill draw functions ───────────────────────────────
 function drawSpiritSiphonAnims() {
   const REACH     = player.atkRange;
@@ -3858,8 +4138,10 @@ function draw() {
     if (placeMode === 'corridor')                    drawCorridorGhost();
     if (placeMode === 'dungeonRoom')                 drawRoomGhost();
   }
+  drawSlimePuddles();
   if (heart) drawHeart();
   drawMinions();
+  drawSlimyMinions();
   for (const a of adventurers) if (a.alive) drawAdventurer(a);
   drawHeavensWake();
   drawFireboltCast();
@@ -4795,6 +5077,26 @@ function drawProjectiles() {
       ctx.beginPath(); ctx.arc(p.x-2, p.y-2, 2, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = '#666655';
       ctx.beginPath(); ctx.arc(p.x+2, p.y+2, 1.5, 0, Math.PI*2); ctx.fill();
+      continue;
+    }
+    if (p.owner === 'player_slimeBall') {
+      ctx.save();
+      ctx.shadowBlur = 8; ctx.shadowColor = '#22ddaa';
+      ctx.fillStyle = '#22ddaa';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#aaffee';
+      ctx.beginPath(); ctx.arc(p.x-2, p.y-2, 2.5, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+      continue;
+    }
+    if (p.owner === 'player_acidPuddle') {
+      ctx.save();
+      ctx.shadowBlur = 6; ctx.shadowColor = '#22cc44';
+      ctx.fillStyle = '#22cc44';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#88ff88';
+      ctx.beginPath(); ctx.arc(p.x-1.5, p.y-1.5, 2, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
       continue;
     }
     if (p.owner === 'player_firebolt') {
@@ -7365,6 +7667,8 @@ function drawRaceSelect() {
         ? [...race.startSkills, 'goblinFlurry']
         : RS_KEYS[i] === 'spirit'
         ? [...race.startSkills, 'spiritSiphon']
+        : RS_KEYS[i] === 'slime'
+        ? [...race.startSkills, 'slimeBalls']
         : race.startSkills;
       displaySkills.forEach((sk, si) => {
         const skill = SKILLS[sk];
