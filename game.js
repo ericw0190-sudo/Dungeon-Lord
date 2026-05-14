@@ -21,7 +21,8 @@ const TRAP_TYPES = {
     baseCost: 10, upgradeBaseCost: 50, maxLevel: 5,
     cooldown: 1.5,
     baseEffect: 0.05, upgradeBoost: 0.01,
-    effectDesc: lv => Math.round((0.05+(lv-1)*0.01)*100)+'% max HP dmg',
+    durabilityAtLevel: lv => lv,
+    effectDesc: lv => Math.round((0.05+(lv-1)*0.01)*100)+'% max HP dmg  Dur:'+lv+'/wave',
   },
   fartMushroom: {
     name: 'Fart Mushroom', shortName: 'SHROOM',
@@ -1310,7 +1311,7 @@ function update(dt) {
     slimyMinions      = [];
     trapContext    = null;
     soilContext    = null;
-    for (const t of placedTraps) { t.revealed = false; t.active = true; t.cooldownTimer = 0; }
+    for (const t of placedTraps) { t.revealed = false; t.active = true; t.cooldownTimer = 0; if (t.type === 'groundSpikes') t.durability = TRAP_TYPES.groundSpikes.durabilityAtLevel(t.level); }
     gameState   = 'build';
     showMsg('100 F-Infamy!  Dungeon ranked to ' + RANKS[dungeonRank] + '!');
     burst(DW/2, CH/2, ['#ffdd00','#ff88ff','#44bbff','#88dd44'], 20);
@@ -1429,7 +1430,7 @@ function update(dt) {
       adventurers  = [];
       heavensWake  = null;
       fireboltCast = null;
-      for (const t of placedTraps) { if (t.type !== 'emberbolt') t.revealed = false; t.active = true; t.cooldownTimer = 0; }
+      for (const t of placedTraps) { if (t.type !== 'emberbolt') { t.revealed = false; t.active = true; t.cooldownTimer = 0; if (t.type === 'groundSpikes') t.durability = TRAP_TYPES.groundSpikes.durabilityAtLevel(t.level); } }
       if (heart && heart.hp < heart.maxHp) {
         heart.hp = Math.min(heart.maxHp, heart.hp + heart.maxHp * 0.10);
       }
@@ -1669,7 +1670,7 @@ function updateAdventurers(dt) {
         ptgx = Math.floor((a.luredByMimic.x+16)/TILE);
         ptgy = Math.floor((a.luredByMimic.y+16)/TILE);
       } else {
-        if (a.cls === 'cleric') {
+        if (a.cls === 'cleric' && a.rank === 'F') {
           let cBest = null, cBestRatio = 1.0;
           for (const other of adventurers) {
             if (other === a || !other.alive) continue;
@@ -1684,30 +1685,43 @@ function updateAdventurers(dt) {
           } else {
             const t = advTarget(); ptgx = t.gx; ptgy = t.gy;
           }
-        } else if ((a.cls === 'warrior' || a.cls === 'ranger') && a.rank === 'F') {
-          // F-rank warrior/ranger: detect threats in 15-tile radius, then player, then heart
-          const AGGRO_RANGE = 15 * 40;
-          let nearestThreat = null, nearestDist = AGGRO_RANGE;
-          const playerDist = Math.hypot((player.x+16)-(a.x+16), (player.y+16)-(a.y+16));
-          if (playerDist < nearestDist) { nearestDist = playerDist; nearestThreat = 'player'; }
-          let nearestMinion = null;
+        } else if (a.cls === 'warrior' && a.rank === 'F') {
+          // F-rank warrior: nearest minion within 6 tiles always wins, else player
+          const AGGRO_RANGE = 6 * TILE;
+          let nearestMinion = null, nearestMinionDist = AGGRO_RANGE + 1;
           for (const mn of placedMinions) {
             if (!mn.alive) continue;
             const md = Math.hypot((mn.x+16)-(a.x+16), (mn.y+16)-(a.y+16));
-            if (md < nearestDist) { nearestDist = md; nearestThreat = 'minion'; nearestMinion = mn; }
+            if (md < AGGRO_RANGE && md < nearestMinionDist) { nearestMinionDist = md; nearestMinion = mn; }
           }
-          if (nearestThreat === 'minion' && nearestMinion) {
+          if (nearestMinion) {
             ptgx = nearestMinion.gx; ptgy = nearestMinion.gy;
-          } else if (a.cls === 'ranger' && playerDist < 4 * TILE) {
-            // F-rank ranger flees when player gets within 4 tiles
-            const fdx = (a.x+16) - (player.x+16), fdy = (a.y+16) - (player.y+16);
-            const flen = Math.hypot(fdx, fdy) || 1;
-            ptgx = Math.max(1, Math.min(GRID-2, Math.floor((a.x+16)/TILE) + Math.round((fdx/flen) * 5)));
-            ptgy = Math.max(1, Math.min(GRID-2, Math.floor((a.y+16)/TILE) + Math.round((fdy/flen) * 5)));
           } else {
-            // Default: aggro player, heart as last resort
             ptgx = Math.floor((player.x+16)/TILE);
             ptgy = Math.floor((player.y+16)/TILE);
+          }
+        } else if (a.cls === 'ranger' && a.rank === 'F') {
+          // F-rank ranger: nearest minion within 6 tiles, else player; flee if player too close
+          const DETECT_RANGE = 6 * TILE;
+          let nearestMinion = null, nearestMinionDist = DETECT_RANGE + 1;
+          for (const mn of placedMinions) {
+            if (!mn.alive) continue;
+            const md = Math.hypot((mn.x+16)-(a.x+16), (mn.y+16)-(a.y+16));
+            if (md < DETECT_RANGE && md < nearestMinionDist) { nearestMinionDist = md; nearestMinion = mn; }
+          }
+          if (nearestMinion) {
+            ptgx = nearestMinion.gx; ptgy = nearestMinion.gy;
+          } else {
+            const playerDist = Math.hypot((player.x+16)-(a.x+16), (player.y+16)-(a.y+16));
+            if (playerDist < 4 * TILE) {
+              const fdx = (a.x+16)-(player.x+16), fdy = (a.y+16)-(player.y+16);
+              const flen = Math.hypot(fdx, fdy) || 1;
+              ptgx = Math.max(1, Math.min(GRID-2, Math.floor((a.x+16)/TILE) + Math.round((fdx/flen)*5)));
+              ptgy = Math.max(1, Math.min(GRID-2, Math.floor((a.y+16)/TILE) + Math.round((fdy/flen)*5)));
+            } else {
+              ptgx = Math.floor((player.x+16)/TILE);
+              ptgy = Math.floor((player.y+16)/TILE);
+            }
           }
         } else {
           // No aggro — all other classes default to heart (or player if no heart)
@@ -1757,29 +1771,34 @@ function updateAdventurers(dt) {
 
           switch (a.cls) {
             case 'warrior':
-              a.burstTimer -= dt;
-              if (a.burstTimer <= 0 && !a.burst) {
-                a.burst = true; a.burstTime = 0.48;
-                a.burstTimer = 2.5 + Math.random() * 1.5;
+              if (a.rank === 'F') {
+                a.burstTimer -= dt;
+                if (a.burstTimer <= 0 && !a.burst) {
+                  a.burst = true; a.burstTime = 0.48;
+                  a.burstTimer = 2.5 + Math.random() * 1.5;
+                }
+                if (a.burst) {
+                  a.burstTime -= dt;
+                  if (a.burstTime <= 0) a.burst = false;
+                  else spd *= 2.3;
+                }
+                ex = Math.sin(a.bobPhase * 0.35) * 0.1;
               }
-              if (a.burst) {
-                a.burstTime -= dt;
-                if (a.burstTime <= 0) a.burst = false;
-                else spd *= 2.3;
-              }
-              ex = Math.sin(a.bobPhase * 0.35) * 0.1;
               break;
 
             case 'mage':
-              if (tdist < 3.5 * TILE) {
-                nx = -(tdx/tdist) * 0.65 + nx * 0.35;
-                ny = -(tdy/tdist) * 0.65 + ny * 0.35;
+              if (a.rank === 'F') {
+                if (tdist < 3.5 * TILE) {
+                  nx = -(tdx/tdist) * 0.65 + nx * 0.35;
+                  ny = -(tdy/tdist) * 0.65 + ny * 0.35;
+                }
+                ex = perp.x * a.orbitDir * 0.42;
+                ey = perp.y * a.orbitDir * 0.42;
               }
-              ex = perp.x * a.orbitDir * 0.42;
-              ey = perp.y * a.orbitDir * 0.42;
               break;
 
             case 'ranger': {
+              if (a.rank === 'F') {
               // Shoot on timer
               a.shootTimer -= dt;
               if (a.shootTimer <= 0) {
@@ -1790,8 +1809,8 @@ function updateAdventurers(dt) {
               if (a.leapCd > 0) a.leapCd -= dt;
               const lpx = (a.x+16)-(player.x+16), lpy = (a.y+16)-(player.y+16);
               const lpdist = Math.hypot(lpx, lpy);
-              // F-rank ranger: leap out of slime puddles
-              if (a.rank === 'F' && a.leapCd <= 0) {
+              // Leap out of slime puddles
+              if (a.leapCd <= 0) {
                 const agxR = Math.floor((a.x+16)/TILE), agyR = Math.floor((a.y+16)/TILE);
                 const onPuddle = slimePuddles.some(sp =>
                   Math.floor(sp.wx/TILE) === agxR && Math.floor(sp.wy/TILE) === agyR
@@ -1855,35 +1874,40 @@ function updateAdventurers(dt) {
                 ex = perp.x * a.orbitDir * 0.55;
                 ey = perp.y * a.orbitDir * 0.55;
               }
+              } // end rank === 'F'
               break;
             }
 
             case 'rogue':
-              // Speed burst
-              a.dashTimer -= dt;
-              if (a.dashPhase) {
-                if (a.dashTimer <= 0) {
-                  a.dashPhase = false;
-                  a.dashTimer = 0.4;
-                  burst(a.x+16, a.y+16, ['#ffee44','#cc88ff','#ffffff'], 6);
-                }
-              } else {
-                if (a.dashTimer <= 0) {
-                  a.dashPhase = true;
-                  a.dashTimer = 2.0 + Math.random() * 2.5;
+              if (a.rank === 'F') {
+                // Speed burst
+                a.dashTimer -= dt;
+                if (a.dashPhase) {
+                  if (a.dashTimer <= 0) {
+                    a.dashPhase = false;
+                    a.dashTimer = 0.4;
+                    burst(a.x+16, a.y+16, ['#ffee44','#cc88ff','#ffffff'], 6);
+                  }
                 } else {
-                  spd *= 1.4;
+                  if (a.dashTimer <= 0) {
+                    a.dashPhase = true;
+                    a.dashTimer = 2.0 + Math.random() * 2.5;
+                  } else {
+                    spd *= 1.4;
+                  }
                 }
+                // Smooth fast movement with a slight weave
+                a.wobble += dt * 3;
+                ex = Math.sin(a.wobble) * 0.12;
               }
-              // Smooth fast movement with a slight weave
-              a.wobble += dt * 3;
-              ex = Math.sin(a.wobble) * 0.12;
               break;
 
             case 'cleric':
-              a.wobble += dt * 2;
-              ex = Math.sin(a.wobble) * 0.2;
-              spd *= 0.88;
+              if (a.rank === 'F') {
+                a.wobble += dt * 2;
+                ex = Math.sin(a.wobble) * 0.2;
+                spd *= 0.88;
+              }
               break;
           }
 
@@ -2755,10 +2779,24 @@ function drawHeavensWakeCastBar() {
 
 // ── Ranger projectile fire ────────────────────────────────────
 function fireRangerProjectile(ranger) {
-  // Priority: aggro target (player) → player → heart
-  let tx = player.x + 16, ty = player.y + 16;
-  if (ranger.aggroTimer <= 0 && !heart) { tx = player.x+16; ty = player.y+16; }
-  const ax   = ranger.x + 16, ay = ranger.y + 16;
+  const ax = ranger.x + 16, ay = ranger.y + 16;
+  // When aggroed on a minion, aim at it and use minion-targeting owner
+  if (ranger.aggroTimer > 0 && ranger.aggroTarget === 'minion' && ranger.aggroMinion && ranger.aggroMinion.alive) {
+    const m = ranger.aggroMinion;
+    const tx = m.x + 16, ty = m.y + 16;
+    const dist = Math.hypot(tx - ax, ty - ay) || 1;
+    projectiles.push({
+      x: ax, y: ay,
+      vx: (tx - ax) / dist * 220,
+      vy: (ty - ay) / dist * 220,
+      dmg: ranger.dmg,
+      life: 3.0,
+      owner: 'enemy_rangerMinion',
+    });
+    return;
+  }
+  // Default: aim at player
+  const tx = player.x + 16, ty = player.y + 16;
   const dist = Math.hypot(tx - ax, ty - ay) || 1;
   projectiles.push({
     x: ax, y: ay,
@@ -2912,6 +2950,31 @@ function updateProjectiles(dt) {
           p.life = 0;
           if (a.hp <= 0) killAdventurer(a);
           break;
+        }
+      }
+    } else if (p.owner === 'enemy_rangerMinion') {
+      // Ranger arrow targeting a minion — hits placed minions and slimy minions
+      let arrowHit = false;
+      for (const m of placedMinions) {
+        if (!m.alive) continue;
+        if (Math.hypot((m.x+16) - p.x, (m.y+16) - p.y) < 16) {
+          m.hp -= p.dmg; m.flash = 0.15;
+          burst(p.x, p.y, ['#ffcc44','#ff8844'], 5);
+          p.life = 0; arrowHit = true;
+          if (m.hp <= 0) killMinion(m);
+          break;
+        }
+      }
+      if (!arrowHit) {
+        for (const sm of slimyMinions) {
+          if (!sm.alive) continue;
+          if (Math.hypot((sm.x+12) - p.x, (sm.y+12) - p.y) < 14) {
+            sm.hp -= Math.max(1, p.dmg - (sm.def || 0)); sm.flash = 0.15;
+            burst(p.x, p.y, ['#ffcc44','#ff8844'], 5);
+            p.life = 0;
+            if (sm.hp <= 0) { sm.alive = false; spawnSlimePuddle(sm.x+12, sm.y+12, sm.color); }
+            break;
+          }
         }
       }
     } else {
@@ -3318,7 +3381,14 @@ function triggerTrap(trap, triggerAdv) {
     triggerAdv.hp -= dmg;
     triggerAdv.flash = 0.3;
     burst(triggerAdv.x+16, triggerAdv.y+16, ['#cc8844','#ff6622','#ffcc66'], 8);
-    showMsg('Spikes! ' + triggerAdv.cls + ' -' + dmg + ' HP');
+    if (trap.durability === undefined) trap.durability = cfg.durabilityAtLevel(trap.level);
+    trap.durability = Math.max(0, trap.durability - 1);
+    if (trap.durability <= 0) {
+      trap.cooldownTimer = Infinity;
+      showMsg('Spikes! ' + triggerAdv.cls + ' -' + dmg + ' HP  (Broken — refills next wave)');
+    } else {
+      showMsg('Spikes! ' + triggerAdv.cls + ' -' + dmg + ' HP  (DUR:' + trap.durability + ')');
+    }
     if (triggerAdv.hp <= 0) killAdventurer(triggerAdv);
   } else if (trap.type === 'fartMushroom') {
     const fogR = cfg.baseEffect + (trap.level - 1) * cfg.upgradeBoost;
@@ -4019,7 +4089,9 @@ function shopClick(mx, my) {
             showMsg('Trap slots expanded to ' + trapSlots + '!');
           } else {
             const cfg = TRAP_TYPES[item.key];
-            trapInventory.push({ type:item.key, level:1, cooldownTimer:0, active:true });
+            const newTrap = { type:item.key, level:1, cooldownTimer:0, active:true };
+            if (item.key === 'groundSpikes') newTrap.durability = TRAP_TYPES.groundSpikes.durabilityAtLevel(1);
+            trapInventory.push(newTrap);
             showMsg(cfg.name + ' added to inventory!');
           }
         } else showMsg('Need ' + item.cost + ' coins!');
@@ -5517,6 +5589,15 @@ function drawTrapTile(px, py, trap, now) {
       ctx.beginPath(); ctx.arc(cx, cy, 17 + 2*Math.sin(phase + 1.5), 0, Math.PI*2); ctx.stroke();
       ctx.restore();
     }
+    // Durability bar at bottom of tile
+    if (trap.durability !== undefined) {
+      const maxDur = TRAP_TYPES.groundSpikes.durabilityAtLevel(trap.level);
+      const bw = TILE - 8;
+      ctx.fillStyle = '#111';
+      ctx.fillRect(px + 4, py + 36, bw, 3);
+      ctx.fillStyle = trap.durability > 0 ? '#ffdd44' : '#553322';
+      ctx.fillRect(px + 4, py + 36, Math.round(bw * (trap.durability / maxDur)), 3);
+    }
   } else if (trap.type === 'quicksand') {
     const cx = px + TILE/2, cy = py + TILE/2;
     if (!trap.revealed) {
@@ -5664,7 +5745,16 @@ function drawTrapContext() {
   ctx.fillStyle='#88aa88';
   if (isQS)
     ctx.fillText(trap.revealed ? 'REVEALED' : 'HIDDEN', px+8, py+38);
-  else if (!trap.active && cfg.cooldown >= 5)
+  else if (trap.type === 'groundSpikes' && trap.durability !== undefined) {
+    const maxDur = TRAP_TYPES.groundSpikes.durabilityAtLevel(trap.level);
+    if (trap.durability <= 0) {
+      ctx.fillStyle = '#cc4422';
+      ctx.fillText('BROKEN  (refills next wave)', px+8, py+38);
+    } else {
+      ctx.fillStyle = '#ddbb44';
+      ctx.fillText('DUR: '+trap.durability+' / '+maxDur, px+8, py+38);
+    }
+  } else if (!trap.active && cfg.cooldown >= 5)
     ctx.fillText('CD: '+Math.ceil(trap.cooldownTimer)+'s', px+8, py+38);
 
   // UPGRADE button
@@ -5709,6 +5799,10 @@ function trapContextClick(mx, my) {
     if (coins >= upgCost) {
       coins -= upgCost;
       trap.level++;
+      if (trap.type === 'groundSpikes') {
+        trap.durability = TRAP_TYPES.groundSpikes.durabilityAtLevel(trap.level);
+        trap.active = true; trap.cooldownTimer = 0;
+      }
       showMsg(cfg.name + ' upgraded to Lv' + trap.level + (trap.level >= cfg.maxLevel ? ' (MAX)' : '') + '!');
     } else showMsg('Need ' + upgCost + ' coins to upgrade!');
     return;
@@ -5719,7 +5813,8 @@ function trapContextClick(mx, my) {
   if (inR(mx,my, px+6,puY, pw-12,22)) {
     setWorldTile(trap.gx, trap.gy, T_FLOOR);
     placedTraps.splice(placedTraps.indexOf(trap), 1);
-    trap.revealed = false; trap.active = true; trap.cooldownTimer = 0; // reset for reuse
+    trap.revealed = false; trap.active = true; trap.cooldownTimer = 0;
+    if (trap.type === 'groundSpikes') trap.durability = TRAP_TYPES.groundSpikes.durabilityAtLevel(trap.level);
     trapInventory.push(trap);
     trapContext = null;
     showMsg(cfg.name + ' picked up!');
@@ -5970,7 +6065,9 @@ function drawTrapTooltip(key, level) {
       'Hidden until an adventurer walks over it.',
       `Deals ${Math.round(cfg.baseEffect*100)}% of the enemy's max HP on trigger.`,
       `Each upgrade adds +${Math.round(cfg.upgradeBoost*100)}% more damage (max level ${cfg.maxLevel}).`,
-      `Rearms and fires again every ${cfg.cooldown} seconds.`,
+      `Rearms every ${cfg.cooldown}s, but only up to its durability limit.`,
+      'Durability equals the trap level (Lv1 = 1 use, Lv5 = 5 uses per wave).',
+      'When durability hits 0 the trap is disabled — it refills at the next wave.',
     ],
     fartMushroom: cfg => [
       'Hidden until an adventurer walks over it.',
@@ -6112,7 +6209,9 @@ function drawInventoryTraps() {
   } else {
     for (const t of placedTraps) {
       const cfg = TRAP_TYPES[t.type];
-      const status = t.type === 'quicksand' ? (t.revealed ? 'REVEALED' : 'HIDDEN') : (!t.active ? 'CD:'+Math.ceil(t.cooldownTimer)+'s' : 'READY');
+      const status = t.type === 'quicksand' ? (t.revealed ? 'REVEALED' : 'HIDDEN')
+        : t.type === 'groundSpikes' ? (t.durability <= 0 ? 'BROKEN' : 'DUR:'+t.durability+'/'+TRAP_TYPES.groundSpikes.durabilityAtLevel(t.level))
+        : (!t.active ? 'CD:'+Math.ceil(t.cooldownTimer)+'s' : 'READY');
       ctx.fillStyle = t.type === 'quicksand' ? (t.revealed ? '#ddaa44' : '#8899aa') : (t.active?'#88cc88':'#5577aa');
       ctx.font='5px "Press Start 2P"';
       ctx.fillText(cfg.shortName+' Lv'+t.level+'  ('+t.gx+','+t.gy+')  '+status, SX+12, iy+12);
