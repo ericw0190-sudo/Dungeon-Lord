@@ -55,7 +55,7 @@ const MINION_TYPES = {
   goblin: {
     name: 'Goblin Minion', shortName: 'GOB',
     color: '#4db533', accentColor: '#88ff44',
-    baseCost: 50, foodPerLevel: 2, respawnTime: 60,
+    baseCost: 50, foodPerLevel: 3, respawnTime: 60,
     upgradeFoodCost: lv => lv <= 4 ? [30, 60, 100, 150][lv - 1] : Math.round(150 * Math.pow(1.45, lv - 4)),
     statsAtLevel: lv => lv <= 5 ? ({
       hp:        [40,  65, 100, 150, 210][lv - 1],
@@ -72,13 +72,13 @@ const MINION_TYPES = {
     }),
     effectDesc: lv => {
       const s = MINION_TYPES.goblin.statsAtLevel(lv);
-      return 'HP:'+s.hp+' ATK:'+s.atk+' SPD:'+s.speed+'  Food:'+(lv*2)+'/min';
+      return 'HP:'+s.hp+' ATK:'+s.atk+' SPD:'+s.speed+'  Food:'+(lv*3)+'/min';
     },
   },
   giantSpider: {
     name: 'Giant Spider', shortName: 'SPD',
     color: '#888877', accentColor: '#ccccbb',
-    baseCost: 300, foodPerLevel: 2, respawnTime: 90,
+    baseCost: 300, foodPerLevel: 5, respawnTime: 90,
     upgradeFoodCost: lv => lv <= 4 ? [50, 100, 160, 230][lv - 1] : Math.round(230 * Math.pow(1.45, lv - 4)),
     statsAtLevel: lv => lv <= 5 ? ({
       hp:        [120, 180, 260, 360, 480][lv - 1],
@@ -99,7 +99,7 @@ const MINION_TYPES = {
     }),
     effectDesc: lv => {
       const s = MINION_TYPES.giantSpider.statsAtLevel(lv);
-      return 'HP:'+s.hp+' Bite:'+s.atk+' Web:4s  Food:'+(lv*2)+'/min';
+      return 'HP:'+s.hp+' Bite:'+s.atk+' Web:4s  Food:'+(lv*5)+'/min';
     },
   },
   skeleton: {
@@ -128,9 +128,9 @@ const MINION_TYPES = {
   goblinFarmer: {
     name: 'Mushroom Farmer', shortName: 'G-FRM',
     color: '#cc8833', accentColor: '#ffcc55',
-    baseCost: 80, foodPerLevel: 0, respawnTime: 150,
+    baseCost: 20, foodPerLevel: 0, respawnTime: 150,
     upgradeFoodCost: lv => lv <= 4 ? [30, 55, 90, 135][lv - 1] : Math.round(135 * Math.pow(1.45, lv - 4)),
-    foodGenAtLevel: lv => lv <= 5 ? [2, 4, 6, 9, 13][lv - 1] : Math.round(13 * Math.pow(1.4, lv - 5)),
+    foodGenAtLevel: lv => lv <= 5 ? [10, 15, 22, 31, 44][lv - 1] : Math.round(44 * Math.pow(1.4, lv - 5)),
     statsAtLevel: lv => lv <= 5 ? ({
       hp:        [20, 28, 38, 50, 65][lv - 1],
       atk:       0, def: 0,
@@ -151,7 +151,7 @@ const MINION_TYPES = {
   goblinWarrior: {
     name: 'Goblin Warrior', shortName: 'G-WAR',
     color: '#8899bb', accentColor: '#ccddf0',
-    baseCost: 120, foodPerLevel: 3, respawnTime: 75,
+    baseCost: 120, foodPerLevel: 5, respawnTime: 75,
     upgradeFoodCost: lv => lv <= 4 ? [50, 90, 140, 200][lv - 1] : Math.round(200 * Math.pow(1.45, lv - 4)),
     statsAtLevel: lv => lv <= 5 ? ({
       hp:        [160, 240, 340, 460, 600][lv - 1],
@@ -170,13 +170,13 @@ const MINION_TYPES = {
     }),
     effectDesc: lv => {
       const s = MINION_TYPES.goblinWarrior.statsAtLevel(lv);
-      return 'HP:'+s.hp+' ATK:'+s.atk+' DEF:'+s.def+'  Food:'+(lv*3)+'/min';
+      return 'HP:'+s.hp+' ATK:'+s.atk+' DEF:'+s.def+'  Food:'+(lv*5)+'/min';
     },
   },
   goblinArcher: {
     name: 'Goblin Archer', shortName: 'G-ARC',
     color: '#88cc44', accentColor: '#bbff66',
-    baseCost: 160, foodPerLevel: 3, respawnTime: 50,
+    baseCost: 160, foodPerLevel: 4, respawnTime: 50,
     upgradeFoodCost: lv => lv <= 4 ? [45, 80, 125, 180][lv - 1] : Math.round(180 * Math.pow(1.45, lv - 4)),
     statsAtLevel: lv => lv <= 5 ? ({
       hp:        [55,  85, 125, 175, 235][lv - 1],
@@ -195,13 +195,13 @@ const MINION_TYPES = {
     }),
     effectDesc: lv => {
       const s = MINION_TYPES.goblinArcher.statsAtLevel(lv);
-      return 'HP:'+s.hp+' Arrow:'+s.atk+'/s  Poison 2s  Food:'+(lv*3)+'/min';
+      return 'HP:'+s.hp+' Arrow:'+s.atk+'/s  Poison 2s  Food:'+(lv*4)+'/min';
     },
   },
   goblinMage: {
     name: 'Goblin Mage', shortName: 'G-MGE',
     color: '#aa55ee', accentColor: '#dd88ff',
-    baseCost: 200, foodPerLevel: 3, respawnTime: 65,
+    baseCost: 200, foodPerLevel: 6, respawnTime: 65,
     upgradeFoodCost: lv => lv <= 4 ? [65, 120, 185, 260][lv - 1] : Math.round(260 * Math.pow(1.45, lv - 4)),
     statsAtLevel: lv => lv <= 5 ? ({
       hp:        [40,  62,  92, 130, 178][lv - 1],
@@ -220,13 +220,13 @@ const MINION_TYPES = {
     }),
     effectDesc: lv => {
       const s = MINION_TYPES.goblinMage.statsAtLevel(lv);
-      return 'HP:'+s.hp+' Bolt:'+s.atk+'/1.5s  Burn 2s  Food:'+(lv*3)+'/min';
+      return 'HP:'+s.hp+' Bolt:'+s.atk+'/1.5s  Burn 2s  Food:'+(lv*6)+'/min';
     },
   },
   mimic: {
     name: 'Mimic', shortName: 'MMC',
     color: '#f0c030', accentColor: '#ffee88',
-    baseCost: 400, foodPerLevel: 1, respawnTime: 120,
+    baseCost: 400, foodPerLevel: 3, respawnTime: 120,
     upgradeFoodCost: lv => lv <= 4 ? [40, 80, 130, 190][lv - 1] : Math.round(190 * Math.pow(1.45, lv - 4)),
     statsAtLevel: lv => lv <= 5 ? ({
       hp:        [80,  120, 170, 230, 300][lv - 1],
@@ -245,7 +245,7 @@ const MINION_TYPES = {
     }),
     effectDesc: lv => {
       const s = MINION_TYPES.mimic.statsAtLevel(lv);
-      return 'HP:'+s.hp+' ATK:'+s.atk+' Lure:'+s.lureRange+'px  Food:'+lv+'/min';
+      return 'HP:'+s.hp+' ATK:'+s.atk+' Lure:'+s.lureRange+'px  Food:'+(lv*3)+'/min';
     },
   },
 };
@@ -892,7 +892,7 @@ const RACES = {
     name: 'GOBLIN',
     color: '#4db533',
     desc: 'A cunning cave dweller.',
-    traits: ['HP regen out of combat', '+10% coins per kill', 'Cowardly', 'Goblin minions cost 50% less'],
+    traits: ['HP regen out of combat', '+10% coins per kill', 'Cowardly', 'Goblin minions cost 50% less', 'Agile: +20% base speed'],
     sprite: GOBLIN_SPR,
     sprColors: GOBLIN_COL,
     startSkills: ['goblinSnatch', 'goblinEscape'],
@@ -932,30 +932,14 @@ const HSPR = [
   [0,0,0,0,0,0,0,0],
 ];
 
-// ── Seeds / Crops ────────────────────────────────────────────
-/**
- * growTime is in SECONDS.
- * Currently all 3 crops take 5 minutes (300 s).
- *
- * To add a new crop:
- *   1. Add an entry here
- *   2. Push the key to SK and a short label to SL
- *   3. Add a shop entry in shopItems()
- */
-const SEEDS = {
-  lettuce: { label:'Dungeon Lettuce', cost:50,  growTime:15,  min:10, max:20, col:'#88cc44', stem:'#447722' },
-  carrot:  { label:'Dungeon Carrot',  cost:100, growTime:30,  min:20, max:40, col:'#ff8833', stem:'#884400' },
-  tomato:  { label:'Dungeon Tomato',  cost:150, growTime:45,  min:30, max:50, col:'#ff3333', stem:'#882222' },
-};
-const SK = ['lettuce','carrot','tomato'];
-const SL = ['LET','CAR','TOM'];
-
-function shopItems() {
+function foodShopItems() {
   return [
-    { key:'cropTile', name:'DUNGEON SOIL',      desc:'Plant seeds to grow food here', cost:500,      have:ctInv,          type:'tile' },
-    { key:'lettuce',  name:'DUNGEON LETTUCE',  desc:'15s grow, 10-20 food yield',   cost:25,       have:sInv.lettuce,   type:'seed' },
-    { key:'carrot',   name:'DUNGEON CARROT',   desc:'30s grow, 20-40 food yield',   cost:50,       have:sInv.carrot,    type:'seed' },
-    { key:'tomato',   name:'DUNGEON TOMATO',   desc:'45s grow, 30-50 food yield',   cost:75,       have:sInv.tomato,    type:'seed' },
+    { key:'cropTile', name:'DUNGEON SOIL', desc:'Converts a floor tile to soil', cost:100, have:ctInv, type:'tile' },
+    { key:'goblinFarmer', name:'MUSHROOM FARMER', type:'minion',
+      desc:'Place on Soil tiles. Generates food passively. Flees enemies. Very fragile. 150s respawn.',
+      cost: MINION_TYPES.goblinFarmer.baseCost, food: MINION_TYPES.goblinFarmer.foodPerLevel,
+      foodGen: MINION_TYPES.goblinFarmer.foodGenAtLevel(1),
+      have: minionInventory.filter(m=>m.type==='goblinFarmer').length + placedMinions.filter(m=>m.type==='goblinFarmer').length },
   ];
 }
 
@@ -981,9 +965,10 @@ ctx.imageSmoothingEnabled = false;
 let grid, player, adventurers, heart, particles, projectiles, slashAnims, flurryAnims, circleAnims, heavensWake, fireboltCast, lesserHealCast, selfHealCast, healAnims, franticCharge, goblinEscapeBoostTimer, lhAOEAnim, quickFeetTimer;
 let spiritSiphonAnims, spectralGraspAnim, ghostlyWailAnim;
 let slimePuddles, slimyMinions;
+let screenShake;
 let coins, food, wave, waveTarget, waveSpawned, waveDefeated, spawnTimer, waveTimer;
 let gameState, placeMode, keys, mouse, flash, flashT, flashTop, flashTopT, focused;
-let ctInv, sInv, crops, shopOpen, shopTab, skillMenuOpen, pendingSkill, paused, pauseStart;
+let ctInv, shopOpen, shopTab, skillMenuOpen, pendingSkill, paused, pauseStart;
 let invOpen, invTab;
 let placedTraps, trapInventory, trapSlots, trapSlotUpgrades, trapContext;
 let placedMinions, minionInventory, minionContext;
@@ -1042,9 +1027,10 @@ function init() {
   ghostlyWailAnim   = null;
   slimePuddles      = [];
   slimyMinions      = [];
+  screenShake       = { x: 0, y: 0, mag: 0, timer: 0 };
 
-  coins       = 600;
-  food        = 10;
+  coins       = 500;
+  food        = 100;
   wave        = 1;
   waveTarget  = 0;
   waveSpawned = 0;
@@ -1063,10 +1049,8 @@ function init() {
   mouse       = { x:0, y:0 };
 
   ctInv       = 0;
-  sInv        = { lettuce:0, carrot:0, tomato:0 };
-  crops       = {};
   shopOpen      = false;
-  shopTab       = 'seeds';
+  shopTab       = 'traps';
   skillMenuOpen = false;
   pendingSkill  = null;
   paused        = false;
@@ -1102,7 +1086,7 @@ function init() {
   heartEverPlaced   = false;
 
   invOpen  = false;
-  invTab   = 'crops';
+  invTab   = 'traps';
 
   gameState   = 'raceSelect';
 }
@@ -1116,6 +1100,7 @@ function selectRace(raceName) {
   player.raceSkill = raceName === 'goblin' ? 'goblinRace' : raceName === 'spirit' ? 'spiritRace' : raceName === 'slime' ? 'slimeRace' : null;
   player.sprite    = race.sprite;
   player.sprColors = race.sprColors;
+  if (raceName === 'goblin') { player.speed = Math.round(player.speed * 1.2); }
   if (raceName === 'spirit') player.atkDmg = Math.round(player.atkDmg * 0.8);
   if (raceName === 'slime') { player.maxHp = Math.round(player.maxHp * 1.5); player.hp = player.maxHp; player.atkDmg = Math.round(player.atkDmg * 0.5); player.speed = Math.round(player.speed * 0.8); }
   let slotIdx = 0;
@@ -1130,8 +1115,6 @@ function selectRace(raceName) {
 function togglePause() {
   if (!focused || gameState === 'gameover' || gameState === 'raceSelect') return;
   if (paused) {
-    const dur = Date.now() - pauseStart;
-    for (const crop of Object.values(crops)) crop.plantTime += dur;
     paused = false;
   } else {
     pauseStart = Date.now();
@@ -1171,8 +1154,6 @@ function bfs(sx, sy, ex, ey, avoid = null) {
       if (vis.has(k)) continue;
       // Keep within a generous world bound
       if (nx < -32 || ny < -32 || nx > 48 || ny > 48) continue;
-      // Block main-dungeon spawn row (adventurers must not exit back out the top)
-      if (ny <= 0 && nx >= 0 && nx < GRID) continue;
       // Avoid revealed quicksand when a set is provided
       if (avoid && avoid.has(k)) continue;
       // Check passability via world pixel centre of tile
@@ -1241,7 +1222,7 @@ function spawnAdventurer() {
     atkCd: 0, atkCdMax: 1.1,
     path: null, pathIdx: 0, pathT: 0,
     alive: true, flash: 0,
-    loot: 8 + wave*6 + Math.floor(Math.random()*10),
+    loot: 14 + Math.floor(Math.random()*10),
     bobPhase: Math.random() * Math.PI * 2,
     wobble: 0,
     kbX: 0, kbY: 0,
@@ -1321,7 +1302,8 @@ function update(dt) {
     burst(DW/2, CH/2, ['#ffdd00','#ff88ff','#44bbff','#88dd44'], 20);
   }
 
-  for (const p of particles) { p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt; }
+  updateScreenShake(dt);
+  for (const p of particles) { p.x += p.vx*dt; p.y += p.vy*dt; p.vx *= (1 - dt*3); p.vy *= (1 - dt*3); p.life -= dt; }
   particles = particles.filter(p => p.life > 0);
   for (const s of slashAnims) s.life -= dt;
   slashAnims = slashAnims.filter(s => s.life > 0);
@@ -1344,11 +1326,6 @@ function update(dt) {
   }
 
   updateMovement(dt);
-
-  // Freeze crop grow timers when heart is not placed (includes heartCarried)
-  if (!heart) {
-    for (const crop of Object.values(crops)) crop.plantTime += dt * 1000;
-  }
 
   // Goblin / Spirit: slow out-of-combat HP regen (paused while carrying heart)
   if ((player.race === 'goblin' || player.race === 'spirit') && !heartCarried) {
@@ -1602,7 +1579,7 @@ function updateAdventurers(dt) {
       const kbNX = a.x + a.kbX * dt;
       const kbNY = a.y + a.kbY * dt;
       if (canMoveAdv(kbNX, a.y)) a.x = kbNX; else a.kbX = 0;
-      if (canMoveAdv(a.x, kbNY) && (!a.enteredDungeon || kbNY >= TILE)) a.y = kbNY; else a.kbY = 0;
+      if (canMoveAdv(a.x, kbNY)) a.y = kbNY; else a.kbY = 0;
       a.kbX *= (1 - dt*14);
       a.kbY *= (1 - dt*14);
       if (Math.abs(a.kbX) < 2) a.kbX = 0;
@@ -1629,7 +1606,7 @@ function updateAdventurers(dt) {
         const fnx = a.x - (fdx/fdist) * a.speed * qsAdvMult * dt;
         const fny = a.y - (fdy/fdist) * a.speed * qsAdvMult * dt;
         if (canMoveAdv(fnx, a.y)) a.x = fnx;
-        if (canMoveAdv(a.x, fny) && (!a.enteredDungeon || fny >= TILE)) a.y = fny;
+        if (canMoveAdv(a.x, fny)) a.y = fny;
         skipPath = true;
       }
     }
@@ -1643,7 +1620,7 @@ function updateAdventurers(dt) {
       const fleeNX = a.x - (fdx/fdist) * a.speed * qsAdvMult * dt;
       const fleeNY = a.y - (fdy/fdist) * a.speed * qsAdvMult * dt;
       if (canMoveAdv(fleeNX, a.y)) a.x = fleeNX;
-      if (canMoveAdv(a.x, fleeNY) && (!a.enteredDungeon || fleeNY >= TILE)) a.y = fleeNY;
+      if (canMoveAdv(a.x, fleeNY)) a.y = fleeNY;
       skipPath = true;
     }
     // Cleric: if any injured ally is within heal range, stop and heal in place
@@ -1666,7 +1643,7 @@ function updateAdventurers(dt) {
       if (a.aggroTimer > 0) {
         // Chase whoever attacked us (minion or player)
         if (a.aggroTarget === 'minion' && a.aggroMinion && a.aggroMinion.alive) {
-          ptgx = a.aggroMinion.gx; ptgy = a.aggroMinion.gy;
+          ptgx = Math.floor((a.aggroMinion.x+16)/TILE); ptgy = Math.floor((a.aggroMinion.y+16)/TILE);
         } else {
           ptgx = Math.floor((player.x+16)/TILE);
           ptgy = Math.floor((player.y+16)/TILE);
@@ -1701,7 +1678,7 @@ function updateAdventurers(dt) {
             if (md < AGGRO_RANGE && md < nearestMinionDist) { nearestMinionDist = md; nearestMinion = mn; }
           }
           if (nearestMinion) {
-            ptgx = nearestMinion.gx; ptgy = nearestMinion.gy;
+            ptgx = Math.floor((nearestMinion.x+16)/TILE); ptgy = Math.floor((nearestMinion.y+16)/TILE);
           } else {
             ptgx = Math.floor((player.x+16)/TILE);
             ptgy = Math.floor((player.y+16)/TILE);
@@ -1716,7 +1693,7 @@ function updateAdventurers(dt) {
             if (md < DETECT_RANGE && md < nearestMinionDist) { nearestMinionDist = md; nearestMinion = mn; }
           }
           if (nearestMinion) {
-            ptgx = nearestMinion.gx; ptgy = nearestMinion.gy;
+            ptgx = Math.floor((nearestMinion.x+16)/TILE); ptgy = Math.floor((nearestMinion.y+16)/TILE);
           } else {
             const playerDist = Math.hypot((player.x+16)-(a.x+16), (player.y+16)-(a.y+16));
             if (playerDist < 4 * TILE) {
@@ -1922,7 +1899,7 @@ function updateAdventurers(dt) {
           const mvX  = (tx2/tlen) * spd * dt;
           const mvY  = (ty2/tlen) * spd * dt;
           if (canMoveAdv(a.x + mvX, a.y)) a.x += mvX;
-          if (canMoveAdv(a.x, a.y + mvY) && (!a.enteredDungeon || a.y + mvY >= TILE)) a.y += mvY;
+          if (canMoveAdv(a.x, a.y + mvY)) a.y += mvY;
         }
       }
     }
@@ -2004,6 +1981,7 @@ function updateAdventurers(dt) {
         player.combatTimer = 5;
         a.atkCd            = a.atkCdMax;
         atk = true;
+        addScreenShake(3);
         burst(player.x+16, player.y+16, ['#ff2244','#ff6688'], 4);
         if (a.cls === 'warrior' && a.burst) {
           const kdx = (player.x+16) - (a.x+16), kdy = (player.y+16) - (a.y+16);
@@ -2059,15 +2037,42 @@ function updateAdventurers(dt) {
 // ── Particles ─────────────────────────────────────────────────
 function burst(x, y, colors, n) {
   for (let i = 0; i < n; i++) {
-    const a   = (Math.PI*2*i)/n + (Math.random()-0.5)*0.5;
-    const spd = 55 + Math.random() * 75;
+    const a   = (Math.PI*2*i)/n + (Math.random()-0.5)*0.8;
+    const spd = 60 + Math.random() * 100;
     particles.push({
       x, y,
       vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
       color: colors[Math.floor(Math.random()*colors.length)],
-      life: 0.4 + Math.random()*0.25, maxLife: 0.65,
-      size: 3 + Math.floor(Math.random()*3),
+      life: 0.35 + Math.random()*0.3, maxLife: 0.65,
+      size: 2.5 + Math.random()*3,
     });
+  }
+  // A few spark trails
+  for (let i = 0; i < Math.min(3, Math.ceil(n/3)); i++) {
+    const a   = Math.PI*2*Math.random();
+    const spd = 90 + Math.random() * 120;
+    particles.push({
+      x, y,
+      vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      life: 0.2 + Math.random()*0.2, maxLife: 0.4,
+      size: 5 + Math.random()*3,
+      type: 'spark',
+    });
+  }
+}
+
+function addScreenShake(mag) {
+  screenShake.mag   = Math.max(screenShake.mag, mag);
+  screenShake.timer = 0.18;
+}
+function updateScreenShake(dt) {
+  if (screenShake.timer > 0) {
+    screenShake.timer = Math.max(0, screenShake.timer - dt);
+    const intensity = screenShake.timer / 0.18;
+    screenShake.x = (Math.random() - 0.5) * 2 * screenShake.mag * intensity;
+    screenShake.y = (Math.random() - 0.5) * 2 * screenShake.mag * intensity;
+    if (screenShake.timer <= 0) { screenShake.x = 0; screenShake.y = 0; screenShake.mag = 0; }
   }
 }
 
@@ -2985,7 +2990,7 @@ function updateProjectiles(dt) {
           if (a.hp <= 0) killAdventurer(a);
           else {
             if (a.cls === 'warrior' || a.cls === 'ranger' || a.cls === 'rogue') {
-              a.aggroTimer = 6; a.aggroTarget = 'minion'; a.path = null;
+              a.aggroTimer = 6; a.aggroTarget = 'minion'; a.aggroMinion = p.minionRef || null; a.path = null;
             }
           }
           break;
@@ -3005,7 +3010,7 @@ function updateProjectiles(dt) {
           if (a.hp <= 0) killAdventurer(a);
           else {
             if (a.cls === 'warrior' || a.cls === 'ranger' || a.cls === 'rogue') {
-              a.aggroTimer = 6; a.aggroTarget = 'minion'; a.path = null;
+              a.aggroTimer = 6; a.aggroTarget = 'minion'; a.aggroMinion = p.minionRef || null; a.path = null;
             }
           }
           break;
@@ -3232,19 +3237,8 @@ function dungeonBuildClick(mx, my) {
     if (tgrid[lgy][lgx] === T_FLOOR) {
       tgrid[lgy][lgx] = T_SOIL;
       ctInv--;
-      if (ctInv === 0) placeMode = null;
+      placeMode = null;
       showMsg('Dungeon Soil placed! (' + ctInv + ' left)');
-    }
-  } else if (placeMode && placeMode.startsWith('plant_')) {
-    const sk = placeMode.slice(6);
-    if (tgrid[lgy][lgx] === T_SOIL) {
-      const key = wgx+','+wgy;
-      if (!crops[key]) {
-        crops[key] = { type:sk, plantTime:Date.now(), growTime:SEEDS[sk].growTime };
-        sInv[sk]--;
-        if (sInv[sk] === 0) placeMode = null;
-        showMsg(SEEDS[sk].label + ' planted!');
-      } else showMsg('Already planted here!');
     }
   } else if (placeMode && placeMode.startsWith('trap_')) {
     const type = placeMode.slice(5);
@@ -3259,7 +3253,7 @@ function dungeonBuildClick(mx, my) {
           if (type === 'emberbolt') { trap.dir = emberboltDir; trap.fireTimer = 0; trap.revealed = true; }
           placedTraps.push(trap);
           tgrid[lgy][lgx] = T_TRAP;
-          if (!trapInventory.some(t => t.type === type)) placeMode = null;
+          placeMode = null;
           showMsg(TRAP_TYPES[type].name + ' placed!  ' + placedTraps.length + '/' + trapSlots + ' slots');
         }
       }
@@ -3278,13 +3272,13 @@ function dungeonBuildClick(mx, my) {
         min.gx = wgx; min.gy = wgy;
         min.x = worldPX; min.y = worldPY;
         min.homeX = min.x; min.homeY = min.y;
-        min.hp = stats.hp; min.maxHp = stats.hp;
+        min.maxHp = stats.hp;
         min.atkCd = 0; min.atkCdMax = stats.atkCdMax; min.webCd = 0;
-        min.alive = true; min.respawnTimer = 0; min.combatTimer = 0;
-        min.flash = 0; min.bobPhase = Math.random()*Math.PI*2;
+        if (min.alive !== false) { min.alive = true; min.hp = stats.hp; min.respawnTimer = 0; }
+        min.combatTimer = 0; min.flash = 0; min.bobPhase = Math.random()*Math.PI*2;
         min.target = null;
         placedMinions.push(min);
-        if (!minionInventory.some(m => m.type === 'giantSpider')) placeMode = null;
+        placeMode = null;
         showMsg('Giant Spider placed!');
       }
     } else if (type === 'goblinFarmer') {
@@ -3297,14 +3291,14 @@ function dungeonBuildClick(mx, my) {
         min.gx = wgx; min.gy = wgy;
         min.x = worldPX+4; min.y = worldPY+4;
         min.homeX = min.x; min.homeY = min.y;
-        min.hp = stats.hp; min.maxHp = stats.hp;
+        min.maxHp = stats.hp;
         min.atkCd = 0; min.atkCdMax = stats.atkCdMax;
         min.arrowCd = 0; min.fireCd = 0; min.leapCd = 0; min.foodAccum = 0;
-        min.alive = true; min.respawnTimer = 0; min.combatTimer = 0;
-        min.flash = 0; min.bobPhase = Math.random()*Math.PI*2;
+        if (min.alive !== false) { min.alive = true; min.hp = stats.hp; min.respawnTimer = 0; }
+        min.combatTimer = 0; min.flash = 0; min.bobPhase = Math.random()*Math.PI*2;
         min.target = null;
         placedMinions.push(min);
-        if (!minionInventory.some(m => m.type === 'goblinFarmer')) placeMode = null;
+        placeMode = null;
         showMsg('Mushroom Farmer placed! Generating +' + MINION_TYPES.goblinFarmer.foodGenAtLevel(min.level) + ' food/min');
       }
     } else if (tgrid[lgy][lgx] === T_FLOOR) {
@@ -3318,15 +3312,15 @@ function dungeonBuildClick(mx, my) {
           min.gx = wgx; min.gy = wgy;
           min.x = worldPX+4; min.y = worldPY+4;
           min.homeX = min.x; min.homeY = min.y;
-          min.hp = stats.hp; min.maxHp = stats.hp;
+          min.maxHp = stats.hp;
           min.atkCd = 0; min.atkCdMax = stats.atkCdMax; min.webCd = 0;
           min.arrowCd = 0; min.fireCd = 0; min.leapCd = 0;
-          min.alive = true; min.respawnTimer = 0; min.combatTimer = 0;
-          min.flash = 0; min.bobPhase = Math.random()*Math.PI*2;
+          if (min.alive !== false) { min.alive = true; min.hp = stats.hp; min.respawnTimer = 0; }
+          min.combatTimer = 0; min.flash = 0; min.bobPhase = Math.random()*Math.PI*2;
           min.target = null;
           if (type === 'mimic') { min.mimicForm = 'chest'; min.luredAdv = null; }
           placedMinions.push(min);
-          if (!minionInventory.some(m => m.type === type)) placeMode = null;
+          placeMode = null;
           showMsg(MINION_TYPES[type].name + ' placed!');
         }
       }
@@ -3344,30 +3338,14 @@ function dungeonBuildClick(mx, my) {
       showMsg('Heart picked up!  Click a floor tile to place it.  Timers are frozen.');
       return;
     }
-    const clickedMinion = placedMinions.find(m => m.gx===wgx && m.gy===wgy);
+    const clickedMinion = placedMinions.find(m => Math.floor((m.x+16)/TILE)===wgx && Math.floor((m.y+16)/TILE)===wgy);
     if (clickedMinion) { minionContext = clickedMinion; return; }
     if (tgrid[lgy][lgx] === T_TRAP) {
       const trap = placedTraps.find(t => t.gx===wgx && t.gy===wgy);
       if (trap) { trapContext = trap; return; }
     }
     if (tgrid[lgy][lgx] === T_SOIL) {
-      const key = wgx+','+wgy;
-      if (crops[key]) {
-        const elapsed = (Date.now() - crops[key].plantTime) / 1000;
-        if (elapsed >= crops[key].growTime) {
-          const cfg = SEEDS[crops[key].type];
-          const gained = cfg.min + Math.floor(Math.random() * (cfg.max - cfg.min + 1));
-          food += gained;
-          delete crops[key];
-          burst(worldPX+20, worldPY+20, ['#88ff44','#44ff88','#ffff44'], 8);
-          showMsg('Harvested!  +' + gained + ' food!');
-        } else {
-          const rem = Math.ceil(crops[key].growTime - elapsed);
-          showMsg('Not ready!  ' + (rem>=60 ? Math.floor(rem/60)+'m ' : '') + rem%60 + 's left');
-        }
-      } else {
-        soilContext = { gx: wgx, gy: wgy, worldPX, worldPY };
-      }
+      soilContext = { gx: wgx, gy: wgy, worldPX, worldPY };
     }
   }
 }
@@ -3376,6 +3354,7 @@ function killAdventurer(a) {
   a.alive = false;
   a.luredByMimic = null;
   waveDefeated++;
+  addScreenShake(1.5);
   let coinGain = a.loot;
   if (player.raceSkill === 'goblinRace') coinGain += Math.floor(a.loot * 0.1);
   coins += coinGain;
@@ -3950,38 +3929,98 @@ function drawSpectralGraspAnim() {
   if      (progress < 0.5) extFrac = progress / 0.5;
   else if (progress < 0.7) extFrac = 1;
   else                      extFrac = 1 - (progress - 0.7) / 0.3;
-  const alpha  = progress > 0.75 ? 1 - (progress - 0.75) / 0.25 : 1;
-  const len    = TILE * 4 * extFrac;
-  const col    = sg.hit ? '#bb88ff' : '#6688cc';
-  const glow   = sg.hit ? '#9944ff' : '#2244aa';
+  const alpha = progress > 0.75 ? 1 - (progress - 0.75) / 0.25 : 1;
+  const len   = TILE * 4 * extFrac;
+  const col   = sg.hit ? '#cc99ff' : '#7799dd';
+  const glow  = sg.hit ? '#9944ff' : '#2244aa';
+
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(player.x + 16, player.y + 16);
   ctx.rotate(sg.angle);
-  ctx.strokeStyle = col; ctx.lineWidth = 3;
-  ctx.shadowBlur = 16; ctx.shadowColor = glow;
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(len, 0); ctx.stroke();
-  // Ghostly hand "claw" at tip
-  if (extFrac > 0.4) {
-    const tipA = (extFrac - 0.4) / 0.6;
-    ctx.globalAlpha = alpha * tipA;
-    ctx.lineWidth = 2;
-    const claws = [[-0.4, 0.25], [0, 0.3], [0.4, 0.25]];
-    for (const [da, dr] of claws) {
+  ctx.shadowBlur = 14;
+  ctx.shadowColor = glow;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // ── Forearm — tapered filled shape ────────────────────────────
+  const wristX = len - 20;
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.moveTo(2, -5);
+  ctx.lineTo(wristX, -3.5);
+  ctx.lineTo(wristX,  3.5);
+  ctx.lineTo(2,  5);
+  ctx.closePath();
+  ctx.fill();
+
+  // ── Hand + fingers (fade in as arm extends) ───────────────────
+  if (extFrac > 0.25) {
+    const handT = Math.min(1, (extFrac - 0.25) / 0.35);
+    ctx.globalAlpha = alpha * handT;
+
+    // Palm — ellipse bridging wrist to knuckles
+    const palmCX = len - 12;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.ellipse(palmCX, 0, 10, 11, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Knuckle line: front edge of palm where fingers begin
+    const kx = palmCX + 9;
+
+    // 4 main fingers: [baseY, forward-angle, length, stroke-width]
+    const fingers = [
+      { by: -9,  a: -0.22, fl: 15, w: 2.8 },  // index
+      { by: -3,  a: -0.06, fl: 17, w: 3.0 },  // middle (longest)
+      { by:  3,  a:  0.09, fl: 15, w: 2.8 },  // ring
+      { by:  9,  a:  0.24, fl: 11, w: 2.4 },  // pinky
+    ];
+
+    ctx.strokeStyle = col;
+    for (const f of fingers) {
+      const ex = kx + Math.cos(f.a) * f.fl;
+      const ey = f.by + Math.sin(f.a) * f.fl;
+      // Finger shaft — slightly curved bezier
+      ctx.lineWidth = f.w;
       ctx.beginPath();
-      ctx.arc(len, 0, 10, da - 0.6, da + 0.6);
+      ctx.moveTo(kx, f.by);
+      ctx.quadraticCurveTo(kx + f.fl * 0.5, f.by + Math.sin(f.a) * f.fl * 0.4, ex, ey);
       ctx.stroke();
+      // Rounded fingertip
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(ex, ey, f.w * 0.65, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    // Thumb — emerges from the lower side of the palm, angled forward-upward
+    const thumbBx = palmCX - 1, thumbBy = 13;
+    const thumbEx = palmCX + 8,  thumbEy = 8;
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(thumbBx, thumbBy);
+    ctx.quadraticCurveTo(thumbBx + 4, thumbBy - 1, thumbEx, thumbEy);
+    ctx.stroke();
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(thumbEx, thumbEy, 1.7, 0, Math.PI * 2);
+    ctx.fill();
   }
-  // Trailing wisp particles
-  ctx.globalAlpha = alpha * 0.3;
-  ctx.strokeStyle = '#aabbff'; ctx.lineWidth = 1;
+
+  // ── Wisp trail along the arm ───────────────────────────────────
+  ctx.globalAlpha = alpha * 0.28;
+  ctx.strokeStyle = '#aabbff';
+  ctx.lineWidth = 1;
   ctx.shadowBlur = 6;
   for (let i = 1; i <= 3; i++) {
     const ox = Math.sin(progress * 12 + i) * 4;
-    const oy = Math.cos(progress * 10 + i) * 4;
-    ctx.beginPath(); ctx.arc(len * (i / 4), ox, 3, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(len * (i / 4), ox, 3, 0, Math.PI * 2);
+    ctx.stroke();
   }
+
   ctx.restore();
 }
 
@@ -4049,7 +4088,7 @@ function uiClick(mx, my) {
   if (inR(mx,my, ux+10,155, UW-20,36)) { if (!heart && !heartCarried) placeMode = placeMode==='heart' ? null : 'heart'; return; }
   if (inR(mx,my, ux+10,232, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } shopOpen = !shopOpen; if (shopOpen) { skillMenuOpen = false; invOpen = false; pendingSkill = null; shopScrollY = 0; } return; }
   if (inR(mx,my, ux+10,266, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } skillMenuOpen = !skillMenuOpen; if (skillMenuOpen) { shopOpen = false; invOpen = false; skillScrollY = 0; } else { pendingSkill = null; } return; }
-  if (inR(mx,my, ux+10,300, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } invOpen = !invOpen; if (invOpen) { shopOpen = false; skillMenuOpen = false; pendingSkill = null; invTab = 'crops'; invScrollY = 0; } return; }
+  if (inR(mx,my, ux+10,300, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } invOpen = !invOpen; if (invOpen) { shopOpen = false; skillMenuOpen = false; pendingSkill = null; invTab = 'traps'; invScrollY = 0; } return; }
   if (inR(mx,my, ux+10,421, UW-20,28)) { if (heartCarried) showMsg('Place Heart down first!'); else if (!heart) showMsg('Place Heart first!'); else startRaid(); }
 }
 
@@ -4080,11 +4119,6 @@ function minionShopItems() {
       cost: player.raceSkill === 'goblinRace' ? Math.round(MINION_TYPES.goblin.baseCost * 0.5) : MINION_TYPES.goblin.baseCost,
       food: MINION_TYPES.goblin.foodPerLevel,
       have: minionInventory.filter(m=>m.type==='goblin').length + placedMinions.filter(m=>m.type==='goblin').length },
-    { key:'goblinFarmer', name:'MUSHROOM FARMER', type:'minion',
-      desc:'Place on Soil tiles. Generates food passively. Flees enemies. Very fragile. 150s respawn.',
-      cost: MINION_TYPES.goblinFarmer.baseCost, food: MINION_TYPES.goblinFarmer.foodPerLevel,
-      foodGen: MINION_TYPES.goblinFarmer.foodGenAtLevel(1),
-      have: minionInventory.filter(m=>m.type==='goblinFarmer').length + placedMinions.filter(m=>m.type==='goblinFarmer').length },
     { key:'goblinWarrior', name:'GOBLIN WARRIOR', type:'minion',
       desc:'Armored tank. High HP and DEF. Slow melee fighter.',
       cost: player.raceSkill === 'goblinRace' ? Math.round(MINION_TYPES.goblinWarrior.baseCost * 0.5) : MINION_TYPES.goblinWarrior.baseCost,
@@ -4128,7 +4162,7 @@ function dungeonShopItems() {
 function shopClick(mx, my) {
   if (inR(mx,my, SX+SW-38, SY+8, 28, 28)) { shopOpen = false; return; }
   const TAB_W = 75, TAB_GAP = 4;
-  if (inR(mx,my, SX+12,SY+40, TAB_W,24))                      { shopTab='seeds';   shopScrollY=0; return; }
+  if (inR(mx,my, SX+12,SY+40, TAB_W,24))                      { shopTab='food';    shopScrollY=0; return; }
   if (inR(mx,my, SX+12+(TAB_W+TAB_GAP),SY+40, TAB_W,24))      { shopTab='traps';   shopScrollY=0; return; }
   if (inR(mx,my, SX+12+(TAB_W+TAB_GAP)*2,SY+40, TAB_W,24))    { shopTab='minions'; shopScrollY=0; return; }
   if (inR(mx,my, SX+12+(TAB_W+TAB_GAP)*3,SY+40, TAB_W,24))    { shopTab='dungeon'; shopScrollY=0; return; }
@@ -4138,18 +4172,27 @@ function shopClick(mx, my) {
   if (my < SHOP_CTOP || my > SHOP_CBOT) return;
   const smy = my + shopScrollY;
 
-  if (shopTab === 'seeds') {
-    const items = shopItems();
+  if (shopTab === 'food') {
+    const items = foodShopItems();
     let iy = SY + 76;
     for (const item of items) {
+      const rowH = item.food !== undefined ? 94 : 80;
       if (inR(mx,smy, SX+SW-104, iy+20, 88, 32)) {
-        if (coins >= item.cost) {
-          coins -= item.cost;
-          if (item.type === 'tile') { ctInv++; showMsg('Dungeon Soil purchased! (' + ctInv + ' owned)'); }
-          else                      { sInv[item.key]++; showMsg(SEEDS[item.key].label + ' x' + sInv[item.key] + '!'); }
-        } else showMsg('Need ' + item.cost + ' coins!');
+        if (item.type === 'tile') {
+          if (coins >= item.cost) {
+            coins -= item.cost; ctInv++;
+            showMsg('Dungeon Soil purchased! (' + ctInv + ' owned)');
+          } else showMsg('Need ' + item.cost + ' coins!');
+        } else {
+          if (food >= item.cost) {
+            food -= item.cost;
+            const mEntry = { type:'goblinFarmer', level:1, combatTimer:0, webCd:0, arrowCd:0, fireCd:0, leapCd:0, foodAccum:0 };
+            minionInventory.push(mEntry);
+            showMsg('Mushroom Farmer added to inventory!');
+          } else showMsg('Need ' + item.cost + ' food!');
+        }
       }
-      iy += 80;
+      iy += rowH;
     }
   } else if (shopTab === 'traps') {
     const items = trapShopItems();
@@ -4180,13 +4223,13 @@ function shopClick(mx, my) {
       const rowH = item.food !== undefined ? 94 : 80;
       if (inR(mx,smy, SX+SW-104, iy+20, 88, 32)) {
         if (item.locked) { showMsg('Upgrade a Goblin Minion to level 5 to unlock this!'); }
-        else if (coins >= item.cost) {
-          coins -= item.cost;
+        else if (food >= item.cost) {
+          food -= item.cost;
           const mEntry = { type:item.key, level:1, combatTimer:0, webCd:0, arrowCd:0, fireCd:0, leapCd:0, foodAccum:0 };
           if (item.key === 'mimic') { mEntry.mimicForm = 'chest'; mEntry.luredAdv = null; }
           minionInventory.push(mEntry);
           showMsg(MINION_TYPES[item.key].name + ' added to inventory!');
-        } else showMsg('Need ' + item.cost + ' coins!');
+        } else showMsg('Need ' + item.cost + ' food!');
       }
       iy += rowH;
     }
@@ -4298,20 +4341,20 @@ function draw() {
   // ── World view (camera-transformed) ─────────────────────────
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, DW, CH); ctx.clip();
-  ctx.fillStyle = '#05030a'; ctx.fillRect(0, 0, DW, CH);
+  ctx.fillStyle = '#100a04'; ctx.fillRect(0, 0, DW, CH);
   ctx.setTransform(
     cam.zoom * _gameScale * DPR, 0, 0, cam.zoom * _gameScale * DPR,
     (_gameOx - cam.wx * cam.zoom * _gameScale) * DPR,
     (_gameOy - cam.wy * cam.zoom * _gameScale) * DPR
   );
+  if (screenShake && (screenShake.x || screenShake.y)) ctx.translate(screenShake.x, screenShake.y);
+  drawWasteland();
   drawWorldCorridors();
   drawExtraRooms();
   drawDungeon();
-  drawCrops();
   if (!paused) {
     if (placeMode === 'heart')                       drawGhost(mouse.x, mouse.y, T_FLOOR, '#ff4488');
     if (placeMode === 'cropTile')                    drawGhost(mouse.x, mouse.y, T_FLOOR, '#7a5230');
-    if (placeMode && placeMode.startsWith('plant_')) drawPlantGhost();
     if (placeMode === 'trap_emberbolt') drawEmberboltGhost();
     else if (placeMode && placeMode.startsWith('trap_')) drawGhost(mouse.x, mouse.y, T_FLOOR, '#cc6600');
     if (placeMode === 'minion_giantSpider') drawSpiderGhost();
@@ -4364,51 +4407,55 @@ function draw() {
   if (gameState === 'gameover') drawGameOverOverlay();
 }
 
+// ── Shared tile renderer (main dungeon, corridors, extra rooms) ─
+function drawDungeonTile(px, py, t, gx, gy, now, trapGX, trapGY) {
+  if (t === T_WALL) {
+    ctx.fillStyle='#110b1f'; ctx.fillRect(px,py,TILE,TILE);
+    ctx.fillStyle='#231940'; ctx.fillRect(px+1,py+1,TILE-2,TILE-2);
+    ctx.fillStyle='#342558';
+    const ev=(gx+gy)%2===0;
+    ctx.fillRect(px+2, ev?py+3:py+20, 18, 12);
+    ctx.fillRect(px+23,ev?py+20:py+3, 14, 12);
+    ctx.fillStyle='#4a3370';
+    ctx.fillRect(px+1,py+1,TILE-2,2); ctx.fillRect(px+1,py+1,2,TILE-2);
+  } else if (t === T_SOIL) {
+    ctx.fillStyle='#3d2006'; ctx.fillRect(px,py,TILE,TILE);
+    ctx.fillStyle='#522c0a'; ctx.fillRect(px+1,py+1,TILE-2,TILE-2);
+    ctx.fillStyle='#6b3a12';
+    for (let i=7; i<TILE-3; i+=8) ctx.fillRect(px+3,py+i,TILE-6,3);
+    ctx.strokeStyle='#7a4818'; ctx.lineWidth=0.5; ctx.strokeRect(px+1,py+1,TILE-2,TILE-2);
+  } else {
+    ctx.fillStyle=FC[((gx*3+gy*7)%3+3)%3]; ctx.fillRect(px,py,TILE,TILE);
+    ctx.strokeStyle='#2a2240'; ctx.lineWidth=0.5; ctx.strokeRect(px,py,TILE,TILE);
+    if ((gx*13+gy*7)%7===0) {
+      ctx.fillStyle='#2c2448';
+      ctx.fillRect(px+14,py+14,5,5); ctx.fillRect(px+24,py+22,3,3);
+    }
+    if (t === T_HEART) {
+      const hp=0.25+0.12*Math.sin(now*0.004);
+      ctx.fillStyle='rgba(255,40,100,'+hp+')'; ctx.fillRect(px,py,TILE,TILE);
+    } else if (t === T_TRAP) {
+      const trap = placedTraps.find(tr => tr.gx===trapGX && tr.gy===trapGY);
+      if (trap) drawTrapTile(px, py, trap, now);
+    }
+  }
+}
+
 // ── World draw (corridors + extra rooms) ──────────────────────
 function drawWorldCorridors() {
   const now = gNow();
   for (const c of worldCorridors) {
     const isEW = c.dir === 'E' || c.dir === 'W';
     const cols = isEW ? 8 : 5, rows = isEW ? 5 : 8;
+    const baseGX = Math.floor(c.pxMin / TILE);
+    const baseGY = Math.floor(c.pyMin / TILE);
+    ctx.fillStyle = '#1c1830';
+    ctx.fillRect(c.pxMin, c.pyMin, cols*TILE, rows*TILE);
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
         const px = c.pxMin + col*TILE, py = c.pyMin + row*TILE;
         const t = c.grid[row][col];
-        if (t === T_WALL) {
-          ctx.fillStyle='#110b1f'; ctx.fillRect(px,py,TILE,TILE);
-          ctx.fillStyle='#231940'; ctx.fillRect(px+1,py+1,TILE-2,TILE-2);
-          ctx.fillStyle='#342558';
-          const ev=(col+row)%2===0;
-          ctx.fillRect(px+2, ev?py+3:py+20, 18, 12);
-          ctx.fillRect(px+23,ev?py+20:py+3, 14, 12);
-          ctx.fillStyle='#4a3370';
-          ctx.fillRect(px+1,py+1,TILE-2,2); ctx.fillRect(px+1,py+1,2,TILE-2);
-        } else if (t === T_SOIL) {
-          ctx.fillStyle='#1a100a'; ctx.fillRect(px,py,TILE,TILE);
-          ctx.fillStyle='#2a180e'; ctx.fillRect(px+2,py+2,TILE-4,TILE-4);
-          ctx.fillStyle='#3a2214';
-          ctx.fillRect(px+4,py+5, 10,4); ctx.fillRect(px+18,py+12,8,3);
-          ctx.fillRect(px+6,py+20,12,4); ctx.fillRect(px+22,py+28,8,3);
-          ctx.fillRect(px+8,py+32, 9,3); ctx.fillRect(px+20,py+7, 6,3);
-          ctx.fillStyle='#4a2e1a';
-          ctx.fillRect(px+14,py+16,6,3); ctx.fillRect(px+5,py+27,7,3);
-          ctx.strokeStyle='#5a3820'; ctx.lineWidth=1; ctx.strokeRect(px+1,py+1,TILE-2,TILE-2);
-        } else {
-          ctx.fillStyle=FC[(col*3+row*7)%3]; ctx.fillRect(px,py,TILE,TILE);
-          ctx.strokeStyle='#2a2240'; ctx.lineWidth=0.5; ctx.strokeRect(px,py,TILE,TILE);
-          if ((col*13+row*7)%7===0) {
-            ctx.fillStyle='#2c2448';
-            ctx.fillRect(px+14,py+14,5,5); ctx.fillRect(px+24,py+22,3,3);
-          }
-          if (t === T_TRAP) {
-            const wgx = Math.floor(c.pxMin/TILE)+col, wgy = Math.floor(c.pyMin/TILE)+row;
-            const trap = placedTraps.find(tr => tr.gx===wgx && tr.gy===wgy);
-            if (trap) drawTrapTile(px, py, trap, now);
-          } else if (t === T_HEART) {
-            const p2=0.25+0.12*Math.sin(now*0.004);
-            ctx.fillStyle='rgba(255,40,100,'+p2+')'; ctx.fillRect(px,py,TILE,TILE);
-          }
-        }
+        drawDungeonTile(px, py, t, baseGX+col, baseGY+row, now, baseGX+col, baseGY+row);
       }
     }
     if (c.toRoomId === null) {
@@ -4426,44 +4473,12 @@ function drawExtraRooms() {
   for (const r of worldRooms) {
     if (r.id === 0) continue;
     const ox = r.wx*TILE, oy = r.wy*TILE;
+    ctx.fillStyle = '#1c1830';
+    ctx.fillRect(ox, oy, GRID*TILE, GRID*TILE);
     for (let lgy = 0; lgy < GRID; lgy++) {
       for (let lgx = 0; lgx < GRID; lgx++) {
         const px = ox+lgx*TILE, py = oy+lgy*TILE, t = r.grid[lgy][lgx];
-        if (t === T_WALL) {
-          ctx.fillStyle='#110b1f'; ctx.fillRect(px,py,TILE,TILE);
-          ctx.fillStyle='#231940'; ctx.fillRect(px+1,py+1,TILE-2,TILE-2);
-          ctx.fillStyle='#342558';
-          const ev=(lgx+lgy)%2===0;
-          ctx.fillRect(px+2, ev?py+3:py+20, 18, 12);
-          ctx.fillRect(px+23,ev?py+20:py+3, 14, 12);
-          ctx.fillStyle='#4a3370';
-          ctx.fillRect(px+1,py+1,TILE-2,2); ctx.fillRect(px+1,py+1,2,TILE-2);
-        } else if (t === T_SOIL) {
-          ctx.fillStyle='#1a100a'; ctx.fillRect(px,py,TILE,TILE);
-          ctx.fillStyle='#2a180e'; ctx.fillRect(px+2,py+2,TILE-4,TILE-4);
-          ctx.fillStyle='#3a2214';
-          ctx.fillRect(px+4,py+5, 10,4); ctx.fillRect(px+18,py+12,8,3);
-          ctx.fillRect(px+6,py+20,12,4); ctx.fillRect(px+22,py+28,8,3);
-          ctx.fillRect(px+8,py+32, 9,3); ctx.fillRect(px+20,py+7, 6,3);
-          ctx.fillStyle='#4a2e1a';
-          ctx.fillRect(px+14,py+16,6,3); ctx.fillRect(px+5,py+27,7,3);
-          ctx.strokeStyle='#5a3820'; ctx.lineWidth=1; ctx.strokeRect(px+1,py+1,TILE-2,TILE-2);
-        } else {
-          ctx.fillStyle=FC[(lgx*3+lgy*7)%3]; ctx.fillRect(px,py,TILE,TILE);
-          ctx.strokeStyle='#2a2240'; ctx.lineWidth=0.5; ctx.strokeRect(px,py,TILE,TILE);
-          if ((lgx*13+lgy*7)%7===0) {
-            ctx.fillStyle='#2c2448';
-            ctx.fillRect(px+14,py+14,5,5); ctx.fillRect(px+24,py+22,3,3);
-          }
-          if (t === T_HEART) {
-            const p=0.25+0.12*Math.sin(now*0.004);
-            ctx.fillStyle='rgba(255,40,100,'+p+')'; ctx.fillRect(px,py,TILE,TILE);
-          } else if (t === T_TRAP) {
-            const wgx=r.wx+lgx, wgy=r.wy+lgy;
-            const trap = placedTraps.find(tr => tr.gx===wgx && tr.gy===wgy);
-            if (trap) drawTrapTile(px, py, trap, now);
-          }
-        }
+        drawDungeonTile(px, py, t, r.wx+lgx, r.wy+lgy, now, r.wx+lgx, r.wy+lgy);
       }
     }
   }
@@ -4759,83 +4774,467 @@ function fitCamera() {
 // Floor tile shades
 const FC = ['#1c1830','#1e1b32','#201d36'];
 
+// Deterministic per-tile hash for wasteland decoration
+function wh(gx, gy) {
+  let h = (gx * 374761393 + gy * 1073741789) | 0;
+  h = (h ^ (h >>> 13)) * 1664525 + 1013904223 | 0;
+  h = (h ^ (h >>> 16)) >>> 0;
+  return h;
+}
+
+
+// ── Polluted ponds ─────────────────────────────────────────────
+// One pond candidate per POND_CHUNK×POND_CHUNK area; ~1 in 6 chunks has a pond.
+// POND_MARGIN keeps centers in the inner region so adjacent-chunk ponds can't overlap.
+const POND_CHUNK  = 20;  // chunk size in tiles (increased to space ponds out)
+const POND_R      = 3;   // pond radius (tiles)
+const POND_MARGIN = 5;   // center kept at least this many tiles from chunk edge
+const POND_EXCL   = 8;   // tile buffer from dungeon edge where ponds can't center
+
+function pondAt(gx, gy) {
+  const chX  = Math.floor(gx / POND_CHUNK);
+  const chY  = Math.floor(gy / POND_CHUNK);
+  const inner = POND_CHUNK - POND_MARGIN * 2;  // 10 — usable interior width
+  for (let dcy = -1; dcy <= 1; dcy++) {
+    for (let dcx = -1; dcx <= 1; dcx++) {
+      const cx = chX + dcx, cy = chY + dcy;
+      const hc = wh(cx * 37 + 11, cy * 53 + 7);
+      if (hc % 6 !== 0) continue;                     // ~1/6 chunks have a pond (50% fewer)
+      // Constrain center to chunk interior — guarantees no inter-chunk overlap
+      const pcx = cx * POND_CHUNK + POND_MARGIN + (hc >>  4) % inner;
+      const pcy = cy * POND_CHUNK + POND_MARGIN + (hc >> 10) % inner;
+      // Exclude pond centers within POND_EXCL tiles of the dungeon
+      if (pcx > -POND_EXCL && pcx < GRID + POND_EXCL &&
+          pcy > -POND_EXCL && pcy < GRID + POND_EXCL) continue;
+      const dist = Math.hypot(gx - pcx, gy - pcy);
+      // Slightly irregular radius per tile
+      const jitter = 1 + 0.2 * (((wh(gx + 3, gy + 5) >> 5) & 7) / 7 - 0.5);
+      if (dist < POND_R * jitter)     return 'water';
+      if (dist < POND_R * jitter + 1) return 'bank';
+    }
+  }
+  return null;
+}
+
+function drawDeadTree(px, py, h, dc) {
+  if (!dc) dc = ctx;
+  const bx   = px + (TILE >> 1) - 2;
+  const by   = py + TILE - 3;
+  const bark = '#484848', dark = '#282828', hi = '#626262';
+
+  switch (h % 5) {
+
+    case 0: { // ── Tall birch — thin trunk, sparse twigs near top ──────
+      const th = 62 + (h >> 4 & 0xe);
+      dc.fillStyle = dark;
+      dc.fillRect(bx-2, by-3, 2, 3); dc.fillRect(bx+3, by-2, 3, 2);
+      dc.fillStyle = bark;
+      dc.fillRect(bx+1, by-3, 2, 3);
+      dc.fillRect(bx, by-th, 3, th);
+      dc.fillStyle = hi;  dc.fillRect(bx, by-th, 1, th);
+      dc.fillStyle = dark; dc.fillRect(bx+2, by-th+2, 1, th-2);
+      const mid = by - (th*0.5)|0;
+      dc.fillStyle = bark;
+      dc.fillRect(bx-5, mid,   5, 2); dc.fillRect(bx-5, mid-3, 2, 3);
+      dc.fillRect(bx+3, mid+8, 5, 2); dc.fillRect(bx+6, mid+4, 2, 4);
+      const top = by - th;
+      dc.fillRect(bx-5, top+2, 5, 1); dc.fillRect(bx-5, top-4, 1, 6); dc.fillRect(bx-7, top-2, 2, 2);
+      dc.fillRect(bx+3, top+4, 4, 1); dc.fillRect(bx+5, top-3, 1, 7); dc.fillRect(bx+6, top-1, 3, 1);
+      dc.fillRect(bx+1, top-9, 1, 9); dc.fillRect(bx-1, top-5, 1, 3); dc.fillRect(bx+2, top-7, 1, 5);
+      break;
+    }
+
+    case 1: { // ── Broad oak — wide horizontal wings both sides ─────────
+      const th = 40 + (h >> 4 & 0x8);
+      dc.fillStyle = dark;
+      dc.fillRect(bx-6, by-4, 6, 4); dc.fillRect(bx+5, by-3, 5, 3);
+      dc.fillStyle = bark;
+      dc.fillRect(bx-4, by-3, 4, 3); dc.fillRect(bx+5, by-2, 3, 2);
+      dc.fillRect(bx-1, by-th, 5, th);
+      dc.fillStyle = hi;  dc.fillRect(bx-1, by-th, 1, th);
+      dc.fillStyle = dark; dc.fillRect(bx+3, by-th+3, 1, th-3);
+      const lb = by - (th*0.72)|0;
+      dc.fillStyle = bark;
+      dc.fillRect(bx-20, lb, 20, 3);
+      dc.fillRect(bx-20, lb-9, 3, 9); dc.fillRect(bx-24, lb-6, 4, 2);
+      dc.fillRect(bx-14, lb-11, 2, 11); dc.fillRect(bx-17, lb-8, 4, 2);
+      dc.fillStyle = dark; dc.fillRect(bx-19, lb+2, 18, 1);
+      const rb = by - (th*0.55)|0;
+      dc.fillStyle = bark;
+      dc.fillRect(bx+4, rb, 19, 3);
+      dc.fillRect(bx+20, rb-9, 3, 9); dc.fillRect(bx+22, rb-6, 4, 2);
+      dc.fillRect(bx+13, rb-11, 2, 11); dc.fillRect(bx+14, rb-8, 4, 2);
+      dc.fillStyle = dark; dc.fillRect(bx+5, rb+2, 18, 1);
+      const top = by - th;
+      dc.fillStyle = bark;
+      dc.fillRect(bx,   top-7, 2, 7); dc.fillRect(bx+2, top-5, 2, 5);
+      dc.fillRect(bx-2, top-4, 2, 4); dc.fillRect(bx+4, top-3, 2, 3);
+      break;
+    }
+
+    case 2: { // ── Gnarled — leans right, sweeping left branch ──────────
+      const th = 50 + (h >> 4 & 0x8);
+      dc.fillStyle = dark;
+      dc.fillRect(bx-8, by-2, 8, 2); dc.fillRect(bx+5, by-3, 6, 3);
+      dc.fillRect(bx-5, by-5, 3, 3);
+      dc.fillStyle = bark;
+      dc.fillRect(bx-6, by-1, 5, 1); dc.fillRect(bx+5, by-2, 4, 2);
+      dc.fillRect(bx-4, by-4, 2, 3);
+      // Trunk in 3 leaning segments
+      dc.fillStyle = bark;
+      dc.fillRect(bx,   by-(th*0.34)|0, 4, (th*0.34)|0);
+      dc.fillRect(bx+1, by-(th*0.67)|0, 4, (th*0.33)|0);
+      dc.fillRect(bx+2, by-th,          4, (th*0.33)|0);
+      dc.fillStyle = hi;
+      dc.fillRect(bx,   by-(th*0.34)|0, 1, (th*0.34)|0);
+      dc.fillRect(bx+1, by-(th*0.67)|0, 1, (th*0.33)|0);
+      dc.fillRect(bx+2, by-th,          1, (th*0.33)|0);
+      dc.fillStyle = dark; dc.fillRect(bx+1, (by-th*0.4)|0, 3, 5);
+      const lb = by - (th*0.72)|0;
+      dc.fillStyle = bark;
+      dc.fillRect(bx-18, lb+5, 19, 3);
+      dc.fillRect(bx-18, lb-3, 3, 8); dc.fillRect(bx-22, lb,   5, 2);
+      dc.fillRect(bx-12, lb-12, 2, 12); dc.fillRect(bx-15, lb-8, 4, 2);
+      dc.fillRect(bx-9,  lb-16, 2,  6); dc.fillRect(bx-11, lb-13, 3, 2);
+      dc.fillStyle = dark; dc.fillRect(bx-17, lb+7, 17, 1);
+      const rs = by - (th*0.42)|0;
+      dc.fillStyle = bark;
+      dc.fillRect(bx+5, rs, 9, 2); dc.fillRect(bx+12, rs-5, 2, 5); dc.fillRect(bx+13, rs-3, 3, 2);
+      const top = by - th;
+      dc.fillRect(bx+2, top-6, 2, 6); dc.fillRect(bx+4, top-4, 2, 4);
+      dc.fillRect(bx,   top-3, 2, 3); dc.fillRect(bx+5, top-7, 1, 4);
+      break;
+    }
+
+    case 3: { // ── Snag — short thick trunk, lightning-struck top ───────
+      const th = 24 + (h >> 4 & 0xa);
+      dc.fillStyle = dark;
+      dc.fillRect(bx-8, by-5, 8, 5); dc.fillRect(bx+5, by-4, 7, 4);
+      dc.fillStyle = bark;
+      dc.fillRect(bx-6, by-4, 6, 4); dc.fillRect(bx+5, by-3, 5, 3);
+      // Wide trunk (6px)
+      dc.fillRect(bx-1, by-th, 6, th);
+      dc.fillStyle = hi;  dc.fillRect(bx-1, by-th, 1, th);
+      dc.fillStyle = dark; dc.fillRect(bx+4, by-th+3, 1, th-3);
+      // Jagged break at top
+      dc.fillRect(bx,   by-th,   2, 5);
+      dc.fillRect(bx+3, by-th,   2, 7);
+      dc.fillRect(bx+1, by-th+3, 2, 4);
+      // Splinters above break
+      dc.fillStyle = bark;
+      dc.fillRect(bx+2, by-th-7, 1, 7);
+      dc.fillRect(bx-1, by-th-3, 1, 3);
+      dc.fillRect(bx+5, by-th-5, 1, 5);
+      // Left stub
+      const s1 = by - (th*0.72)|0;
+      dc.fillRect(bx-9, s1, 9, 3); dc.fillRect(bx-9, s1-2, 2, 2);
+      dc.fillStyle = dark; dc.fillRect(bx-8, s1+2, 7, 1);
+      // Right stub
+      const s2 = by - (th*0.4)|0;
+      dc.fillStyle = bark;
+      dc.fillRect(bx+5, s2, 8, 3); dc.fillRect(bx+11, s2-2, 2, 2);
+      dc.fillStyle = dark; dc.fillRect(bx+6, s2+2, 6, 1);
+      break;
+    }
+
+    default: { // ── Y-Fork — trunk splits into two angled sub-trunks ────
+      const forkY = by - 14;
+      dc.fillStyle = dark;
+      dc.fillRect(bx-3, by-3, 3, 3); dc.fillRect(bx+4, by-2, 4, 2);
+      dc.fillStyle = bark;
+      dc.fillRect(bx-2, by-2, 2, 2);
+      // Base trunk
+      dc.fillRect(bx, by-14, 4, 14);
+      dc.fillStyle = hi;  dc.fillRect(bx, by-14, 1, 14);
+      dc.fillStyle = dark; dc.fillRect(bx+3, by-11, 1, 11);
+      // Left sub-trunk (3 segments, angling left)
+      dc.fillStyle = bark;
+      dc.fillRect(bx-2,  forkY-14, 3, 14);
+      dc.fillRect(bx-5,  forkY-30, 3, 16);
+      dc.fillRect(bx-8,  forkY-48, 2, 18);
+      dc.fillStyle = hi;
+      dc.fillRect(bx-2, forkY-14, 1, 14);
+      dc.fillRect(bx-5, forkY-30, 1, 16);
+      // Left branch
+      dc.fillStyle = bark;
+      dc.fillRect(bx-16, forkY-22, 11, 2);
+      dc.fillRect(bx-16, forkY-27,  2,  5); dc.fillRect(bx-20, forkY-25, 4, 2);
+      // Left crown
+      const ltop = forkY - 48;
+      dc.fillRect(bx-10, ltop-5, 2, 5); dc.fillRect(bx-8,  ltop-4, 2, 4);
+      dc.fillRect(bx-12, ltop-3, 2, 3);
+      // Right sub-trunk (3 segments, angling right)
+      dc.fillStyle = bark;
+      dc.fillRect(bx+4,  forkY-14, 3, 14);
+      dc.fillRect(bx+7,  forkY-28, 3, 14);
+      dc.fillRect(bx+9,  forkY-42, 2, 14);
+      dc.fillStyle = hi;
+      dc.fillRect(bx+4, forkY-14, 1, 14);
+      dc.fillRect(bx+7, forkY-28, 1, 14);
+      // Right branch
+      dc.fillStyle = bark;
+      dc.fillRect(bx+13, forkY-18, 9, 2);
+      dc.fillRect(bx+20, forkY-23, 2,  5); dc.fillRect(bx+21, forkY-21, 3, 2);
+      // Right crown
+      const rtop = forkY - 42;
+      dc.fillRect(bx+10, rtop-5, 2, 5); dc.fillRect(bx+12, rtop-3, 2, 3);
+      dc.fillRect(bx+8,  rtop-3, 2, 3);
+      break;
+    }
+  }
+}
+
+// ── Wasteland offscreen cache ──────────────────────────────────────────────────
+// Static content (earth, trees, pond tiles) is rendered once to an offscreen canvas
+// and blitted each frame. Only animated bubbles are drawn live.
+let _wlCache = null, _wlCacheCam = null, _wlWaterTiles = [];
+
+function _buildWastelandCache() {
+  if (!_wlCache || _wlCache.width !== c.width || _wlCache.height !== c.height) {
+    _wlCache = document.createElement('canvas');
+    _wlCache.width  = c.width;
+    _wlCache.height = c.height;
+  }
+  _wlCacheCam  = { wx: cam.wx, wy: cam.wy, zoom: cam.zoom };
+  _wlWaterTiles = [];
+
+  const oc = _wlCache.getContext('2d');
+  oc.clearRect(0, 0, _wlCache.width, _wlCache.height);
+  oc.setTransform(
+    cam.zoom * _gameScale * DPR, 0, 0, cam.zoom * _gameScale * DPR,
+    (_gameOx - cam.wx * cam.zoom * _gameScale) * DPR,
+    (_gameOy - cam.wy * cam.zoom * _gameScale) * DPR
+  );
+
+  const viewW = DW / cam.zoom, viewH = CH / cam.zoom;
+  const x0 = Math.floor(cam.wx / TILE) - 1;
+  const y0 = Math.floor(cam.wy / TILE) - 1;
+  const x1 = Math.ceil((cam.wx + viewW) / TILE) + 1;
+  const y1 = Math.ceil((cam.wy + viewH) / TILE) + 1;
+  const DX0 = -3, DX1 = GRID + 2, DY0 = -3, DY1 = GRID + 2;
+  const BASES  = ['#1e1208','#231508','#261a0a','#201005'];
+  const LIGHTS = ['#3a220e','#362010','#3e2812','#2e1c09'];
+  const DARK   = '#130c04';
+  const ROCK   = '#1a1006';
+  const ROCKHI = '#261608';
+
+  oc.lineWidth = 1;
+
+  for (let gy = y0; gy <= y1; gy++) {
+    for (let gx = x0; gx <= x1; gx++) {
+      const px = gx * TILE, py = gy * TILE;
+      const h  = wh(gx, gy);
+      const rv = pondAt(gx, gy);
+      const nearDungeon = gx >= DX0 && gx <= DX1 && gy >= DY0 && gy <= DY1;
+
+      if (rv === 'water') {
+        if (h % 3 === 0) _wlWaterTiles.push({ gx, gy, h });  // 1/3 eligible for bubbles
+        oc.fillStyle = '#090f05';
+        oc.fillRect(px, py, TILE, TILE);
+        oc.fillStyle = '#0c1507';
+        oc.fillRect(px+2, py+2, TILE-4, TILE-4);
+        if (h % 5 === 0) {
+          oc.fillStyle = '#121c08';
+          oc.fillRect(px + (h >> 5 & 0x18), py + (h >> 9 & 0x18), 9, 6);
+        }
+        oc.fillStyle = '#141a07';
+        oc.fillRect(px, py,        TILE, 2);
+        oc.fillRect(px, py+TILE-2, TILE, 2);
+        oc.fillRect(px, py+2,         2, TILE-4);
+        oc.fillRect(px+TILE-2, py+2,  2, TILE-4);
+        continue;
+      }
+
+      if (rv === 'bank') {
+        oc.fillStyle = '#191408';
+        oc.fillRect(px, py, TILE, TILE);
+        oc.fillStyle = '#201a0a';
+        oc.fillRect(px+1, py+1, TILE-2, TILE-2);
+        oc.fillStyle = '#282010';
+        oc.fillRect(px+2, py+2, TILE-4, 2);
+        oc.fillRect(px+2, py+TILE-4, TILE-4, 2);
+        continue;
+      }
+
+      oc.fillStyle = BASES[h % 4];
+      oc.fillRect(px, py, TILE, TILE);
+      if ((h >> 2 & 3) === 0) {
+        oc.fillStyle = LIGHTS[(h >> 4) % 4];
+        oc.fillRect(px + (h >> 13 & 0x1f), py + (h >> 18 & 0x1f),
+                    10 + (h >> 6 & 0xf),   6  + (h >> 10 & 0x7));
+      }
+      if ((h >> 3 & 3) === 0) {
+        oc.strokeStyle = DARK;
+        const crx = px + 4 + (h >> 7 & 0x1c), cry = py + 4 + (h >> 12 & 0x1c);
+        const clen = 8 + (h >> 17 & 0x7), flip = h >> 5 & 1;
+        oc.beginPath(); oc.moveTo(crx, cry); oc.lineTo(crx + clen, cry + (flip ? 3 : -2)); oc.stroke();
+        oc.beginPath(); oc.moveTo(crx + (clen >> 1), cry + (flip ? 1 : -1));
+        oc.lineTo(crx + (clen >> 1) + 4, cry + (flip ? 7 : -6)); oc.stroke();
+      }
+      if ((h >> 1 & 7) === 0) {
+        const rx = px + (h >> 9 & 0x1e), ry = py + (h >> 14 & 0x1e);
+        const rw = 5 + (h >> 19 & 3),    rh = 3 + (h >> 21 & 2);
+        oc.fillStyle = ROCK; oc.fillRect(rx, ry, rw, rh);
+        oc.fillStyle = ROCKHI; oc.fillRect(rx+1, ry, rw-2, 1);
+      }
+      if ((h >> 4 & 5) === 0) {
+        oc.fillStyle = ROCK;
+        oc.fillRect(px + (h >> 8  & 0x1f), py + (h >> 13 & 0x1f), 2, 2);
+        oc.fillRect(px + (h >> 16 & 0x1f), py + (h >> 21 & 0x1f), 2, 1);
+      }
+      if (h % 11 === 0) {
+        const tx = px + (h >> 6 & 0x1e), ty = py + (h >> 11 & 0x1e);
+        oc.fillStyle = '#2e1e08';
+        oc.fillRect(tx,   ty+4, 1, 5); oc.fillRect(tx+2, ty+2, 1, 7); oc.fillRect(tx+4, ty+5, 1, 4);
+        oc.fillStyle = '#3a2810';
+        oc.fillRect(tx,   ty+3, 1, 1); oc.fillRect(tx+2, ty+1, 1, 1); oc.fillRect(tx+4, ty+4, 1, 1);
+      }
+      if (h % 44 === 0 && !nearDungeon) {
+        drawDeadTree(px, py, h, oc);
+      }
+    }
+  }
+}
+
+function drawWasteland() {
+  const now = gNow();
+
+  // Rebuild static cache when camera moves more than half a tile or zoom changes
+  const needRebuild = !_wlCache
+    || _wlCache.width  !== c.width
+    || _wlCache.height !== c.height
+    || cam.zoom        !== _wlCacheCam.zoom
+    || Math.abs(cam.wx - _wlCacheCam.wx) > TILE / 2
+    || Math.abs(cam.wy - _wlCacheCam.wy) > TILE / 2;
+
+  if (needRebuild) _buildWastelandCache();
+
+  // Blit static wasteland — reset to identity so we draw straight to screen coords
+  const dx = (_wlCacheCam.wx - cam.wx) * cam.zoom * _gameScale * DPR;
+  const dy = (_wlCacheCam.wy - cam.wy) * cam.zoom * _gameScale * DPR;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(_wlCache, dx, dy);
+  ctx.restore();
+
+  // Animated bubbles only — bigger circles, ~1/3 of water tiles, shorter visible window
+  for (const { gx, gy, h } of _wlWaterTiles) {
+    const bubPhase = (now * 0.00035 + (h & 0xff) * 0.04) % 1;
+    if (bubPhase >= 0.04) continue;
+    const px = gx * TILE, py = gy * TILE;
+    const bx = px + (h >> 7 & 0x1c) + 4;
+    const by = py + (h >> 11 & 0x1c) + 4;
+    ctx.fillStyle = '#1e2e0e';
+    ctx.beginPath();
+    ctx.arc(bx, by, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0c1507';
+    ctx.beginPath();
+    ctx.arc(bx + 1, by - 1, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 function drawDungeon() {
   const now = gNow();
   for (let gy=0; gy<GRID; gy++) {
     for (let gx=0; gx<GRID; gx++) {
       const px=gx*TILE, py=gy*TILE, t=grid[gy][gx];
-      if (t === T_WALL) {
-        ctx.fillStyle='#110b1f'; ctx.fillRect(px,py,TILE,TILE);
-        ctx.fillStyle='#231940'; ctx.fillRect(px+1,py+1,TILE-2,TILE-2);
-        ctx.fillStyle='#342558';
-        const ev=(gx+gy)%2===0;
-        ctx.fillRect(px+2, ev?py+3:py+20, 18, 12);
-        ctx.fillRect(px+23,ev?py+20:py+3,14, 12);
-        ctx.fillStyle='#4a3370';
-        ctx.fillRect(px+1,py+1,TILE-2,2); ctx.fillRect(px+1,py+1,2,TILE-2);
-      } else if (t === T_SOIL) {
-        ctx.fillStyle='#3d2006'; ctx.fillRect(px,py,TILE,TILE);
-        ctx.fillStyle='#522c0a'; ctx.fillRect(px+1,py+1,TILE-2,TILE-2);
-        ctx.fillStyle='#6b3a12';
-        for (let i=7; i<TILE-3; i+=8) ctx.fillRect(px+3,py+i,TILE-6,3);
-        ctx.strokeStyle='#7a4818'; ctx.lineWidth=0.5; ctx.strokeRect(px+1,py+1,TILE-2,TILE-2);
-      } else {
-        ctx.fillStyle=FC[(gx*3+gy*7)%3]; ctx.fillRect(px,py,TILE,TILE);
-        ctx.strokeStyle='#2a2240'; ctx.lineWidth=0.5; ctx.strokeRect(px,py,TILE,TILE);
-        if ((gx*13+gy*7)%7===0) {
-          ctx.fillStyle='#2c2448';
-          ctx.fillRect(px+14,py+14,5,5); ctx.fillRect(px+24,py+22,3,3);
-        }
-        if (t === T_HEART) {
-          const p=0.25+0.12*Math.sin(now*0.004);
-          ctx.fillStyle='rgba(255,40,100,'+p+')';
-          ctx.fillRect(px,py,TILE,TILE);
-        } else if (t === T_TRAP) {
-          const trap = placedTraps.find(tr => tr.gx===gx && tr.gy===gy);
-          if (trap) drawTrapTile(px, py, trap, now);
-        }
-      }
+      drawDungeonTile(px, py, t, gx, gy, now, gx, gy);
     }
   }
+  // Dungeon entrance gate
   const ex = 7*TILE;
-  ctx.fillStyle='#6b21a822'; ctx.fillRect(ex,0,TILE,TILE);
-  ctx.fillStyle='#9333ea';   ctx.fillRect(ex,0,TILE,3);
-  ctx.font='6px "Press Start 2P"'; ctx.fillStyle='#9333ea99'; ctx.textAlign='center';
-  ctx.fillText('ENTER', ex+TILE/2, 14); ctx.textAlign='left';
+  const gateX = ex, gateW = TILE, gateY = 0, gateH = TILE;
+
+  // Gate arch opening (dark void)
+  ctx.fillStyle = '#0a0010';
+  ctx.fillRect(gateX + 5, gateY, gateW - 10, gateH);
+
+  // Portcullis bars (vertical iron bars)
+  const barCount = 5;
+  const barW = 2;
+  const innerW = gateW - 10;
+  const spacing = (innerW - barCount * barW) / (barCount + 1);
+  ctx.fillStyle = '#666688';
+  for (let i = 0; i < barCount; i++) {
+    const bx = gateX + 5 + Math.round(spacing * (i + 1) + barW * i);
+    ctx.fillRect(bx, gateY, barW, gateH);
+  }
+  // Portcullis horizontal cross-bar
+  ctx.fillStyle = '#666688';
+  ctx.fillRect(gateX + 5, gateY + Math.round(gateH * 0.55), innerW, 2);
+
+  // Stone pillars (left and right edges)
+  ctx.fillStyle = '#4a4a5a';
+  ctx.fillRect(gateX, gateY, 5, gateH);
+  ctx.fillRect(gateX + gateW - 5, gateY, 5, gateH);
+  // Pillar stone brick lines
+  ctx.fillStyle = '#3a3a48';
+  for (let row = 0; row < 4; row++) {
+    const ly = gateY + row * 10 + 5;
+    ctx.fillRect(gateX, ly, 5, 1);
+    ctx.fillRect(gateX + gateW - 5, ly, 5, 1);
+  }
+  // Pillar highlights
+  ctx.fillStyle = '#5a5a6e';
+  ctx.fillRect(gateX, gateY, 1, gateH);
+  ctx.fillRect(gateX + gateW - 1, gateY, 1, gateH);
+
+  // Top arch lintel
+  ctx.fillStyle = '#4a4a5a';
+  ctx.fillRect(gateX, gateY, gateW, 5);
+  ctx.fillStyle = '#3a3a48';
+  ctx.fillRect(gateX, gateY + 4, gateW, 1);
+  ctx.fillStyle = '#5a5a6e';
+  ctx.fillRect(gateX, gateY, gateW, 1);
+
+  // Animated torches on each side
+  function drawTorch(tx, ty) {
+    const flicker1 = Math.sin(now * 0.007 + tx) * 0.5 + 0.5;
+    const flicker2 = Math.sin(now * 0.011 + tx * 0.3) * 0.5 + 0.5;
+    const flicker3 = Math.sin(now * 0.0053 + tx * 0.7) * 0.5 + 0.5;
+
+    // Torch handle
+    ctx.fillStyle = '#8B5E3C';
+    ctx.fillRect(tx - 1, ty + 3, 3, 7);
+
+    // Torch bracket
+    ctx.fillStyle = '#555566';
+    ctx.fillRect(tx - 2, ty + 2, 5, 3);
+
+    // Outer glow
+    const glowR = 6 + flicker1 * 3;
+    const grd = ctx.createRadialGradient(tx + 0.5, ty - 2, 0, tx + 0.5, ty - 2, glowR);
+    grd.addColorStop(0, 'rgba(255,200,60,0.35)');
+    grd.addColorStop(1, 'rgba(255,120,0,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(tx + 0.5, ty - 2, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Flame core (orange)
+    const fh = 5 + flicker2 * 2;
+    const fw = 3 + flicker3 * 1;
+    ctx.fillStyle = `rgba(255,${Math.round(100 + flicker1 * 80)},0,0.95)`;
+    ctx.beginPath();
+    ctx.ellipse(tx + 0.5, ty - 1 - fh * 0.3, fw * 0.5, fh * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Flame tip (yellow-white)
+    ctx.fillStyle = `rgba(255,${Math.round(220 + flicker2 * 35)},${Math.round(60 + flicker3 * 80)},0.9)`;
+    ctx.beginPath();
+    ctx.ellipse(tx + 0.5, ty - 2 - fh * 0.5, fw * 0.3, fh * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Left torch (outside left pillar)
+  drawTorch(gateX - 6, gateY + 14);
+  // Right torch (outside right pillar)
+  drawTorch(gateX + gateW + 5, gateY + 14);
 }
 
-function drawCrops() {
-  const now = gNow();
-  for (const [key, crop] of Object.entries(crops)) {
-    const [gx,gy] = key.split(',').map(Number);
-    const px=gx*TILE, py=gy*TILE;
-    const pct = Math.min(1, (now - crop.plantTime)/1000 / crop.growTime);
-    const cfg  = SEEDS[crop.type], cx=px+TILE/2, cy=py+TILE/2;
-    if (pct < 0.33) {
-      ctx.fillStyle='#ccffcc'; ctx.fillRect(cx-2,cy+1,4,8);
-      ctx.fillStyle='#aaffaa'; ctx.fillRect(cx-6,cy-3,8,5); ctx.fillRect(cx+1,cy-6,6,5);
-    } else if (pct < 0.66) {
-      ctx.fillStyle=cfg.stem;  ctx.fillRect(cx-2,cy-1,4,12);
-      ctx.fillStyle=cfg.col;   ctx.fillRect(cx-8,cy-9,16,7); ctx.fillRect(cx-5,cy-15,10,7);
-    } else if (pct < 1) {
-      ctx.fillStyle=cfg.stem;  ctx.fillRect(cx-2,cy+1,4,10);
-      ctx.fillStyle=cfg.col;   ctx.fillRect(cx-10,cy-6,20,8); ctx.fillRect(cx-7,cy-14,14,8); ctx.fillRect(cx-4,cy-20,8,7);
-    } else {
-      ctx.shadowBlur=10; ctx.shadowColor='#ffff44';
-      ctx.fillStyle=cfg.stem; ctx.fillRect(cx-2,cy+1,4,10);
-      ctx.fillStyle=cfg.col;  ctx.fillRect(cx-10,cy-6,20,8); ctx.fillRect(cx-7,cy-14,14,8); ctx.fillRect(cx-4,cy-20,8,7);
-      ctx.shadowBlur=0;
-      if (Math.floor(now/400)%2===0) {
-        ctx.fillStyle='#ffff44'; ctx.font='10px "Press Start 2P"';
-        ctx.textAlign='center'; ctx.fillText('!', cx, py+11); ctx.textAlign='left';
-      }
-    }
-    if (pct < 1) {
-      ctx.fillStyle='#111';    ctx.fillRect(px+4, py+TILE-7, TILE-8, 4);
-      ctx.fillStyle=cfg.col;   ctx.fillRect(px+4, py+TILE-7, (TILE-8)*pct, 4);
-    }
-  }
-}
+
 
 function spr(sp, col, ox, oy) {
   for (let py=0; py<sp.length; py++)
@@ -4905,16 +5304,6 @@ function drawSpiderGhost() {
   ctx.strokeRect(worldPX, worldPY, TILE*2, TILE*2);
 }
 
-function drawPlantGhost() {
-  if (mouse.x >= DW) return;
-  const wmx = mouse.x/cam.zoom + cam.wx, wmy = mouse.y/cam.zoom + cam.wy;
-  const res = resolveWorldTile(wmx, wmy);
-  if (!res || res.grid[res.lgy][res.lgx] !== T_SOIL) return;
-  const wgx = Math.round(res.worldPX/TILE), wgy = Math.round(res.worldPY/TILE);
-  if (crops[wgx+','+wgy]) return;
-  ctx.fillStyle='#44ff4422'; ctx.fillRect(res.worldPX,res.worldPY,TILE,TILE);
-  ctx.strokeStyle='#44ff44aa'; ctx.lineWidth=2/cam.zoom; ctx.strokeRect(res.worldPX,res.worldPY,TILE,TILE);
-}
 
 function drawHeart() {
   const now=gNow(), hp=heart.hp/heart.maxHp;
@@ -4922,8 +5311,14 @@ function drawHeart() {
   ctx.shadowBlur=10+7*Math.sin(now*0.004); ctx.shadowColor=col;
   spr(HSPR, {1:col,2:'#ffaad4'}, heart.x, heart.y);
   ctx.shadowBlur=0;
-  ctx.fillStyle='#111'; ctx.fillRect(heart.x,heart.y-10,36,5);
-  ctx.fillStyle=col;    ctx.fillRect(heart.x,heart.y-10,36*hp,5);
+  ctx.fillStyle='#070710'; ctx.fillRect(heart.x-1,heart.y-11,38,7);
+  ctx.fillStyle='#111';    ctx.fillRect(heart.x,heart.y-10,36,5);
+  if (hp > 0) {
+    const hW = Math.max(1, Math.round(36*hp));
+    ctx.fillStyle=col; ctx.fillRect(heart.x,heart.y-10,hW,5);
+    ctx.globalAlpha=0.45; ctx.fillStyle='#fff'; ctx.fillRect(heart.x,heart.y-10,hW,1);
+    ctx.globalAlpha=1;
+  }
 }
 
 function drawPlayer() {
@@ -4958,12 +5353,25 @@ function drawPlayer() {
     }
     ctx.restore();
   }
-  ctx.fillStyle='#00000044'; ctx.fillRect(player.x+3, player.y+29, 26, 5);
+  ctx.fillStyle='#00000055'; ctx.fillRect(player.x+3, player.y+30, 26, 4);
   spr(player.sprite || PSPR, player.sprColors || PCOL, player.x, player.y);
   const hp = player.hp / player.maxHp;
-  ctx.fillStyle='#111'; ctx.fillRect(player.x,player.y-8,32,5);
-  ctx.fillStyle = hp>0.5 ? '#44ff44' : (hp>0.25 ? '#ffaa00' : '#ff2222');
-  ctx.fillRect(player.x, player.y-8, 32*hp, 5);
+  const hpCol = hp>0.5 ? '#33ee33' : (hp>0.25 ? '#ffaa00' : '#ff2222');
+  const hpHiCol = hp>0.5 ? '#88ff88' : (hp>0.25 ? '#ffdd88' : '#ff7777');
+  // HP bar border
+  ctx.fillStyle = '#070710';
+  ctx.fillRect(player.x-1, player.y-9, 34, 7);
+  // HP bar bg
+  ctx.fillStyle = '#111';
+  ctx.fillRect(player.x, player.y-8, 32, 5);
+  // HP bar fill + highlight
+  if (hp > 0) {
+    const hpW = Math.max(1, Math.round(32*hp));
+    ctx.fillStyle = hpCol;
+    ctx.fillRect(player.x, player.y-8, hpW, 5);
+    ctx.fillStyle = hpHiCol;
+    ctx.fillRect(player.x, player.y-8, hpW, 1);
+  }
   if (player.atkCd > player.atkCdMax*0.6) {
     ctx.strokeStyle='#44cc4433'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.arc(player.x+16, player.y+16, player.atkRange, 0, Math.PI*2); ctx.stroke();
@@ -4978,8 +5386,20 @@ function drawAdventurer(a) {
   spr(cs.s, a.flash > 0 ? AHIT : cs.c, dx, dy);
   // HP bar (rank-coloured)
   const hp = a.hp / a.maxHp;
-  ctx.fillStyle='#111'; ctx.fillRect(dx,dy-8,32,5);
-  ctx.fillStyle=RCOL[a.rank]||'#aaa'; ctx.fillRect(dx,dy-8,32*hp,5);
+  ctx.fillStyle = '#070710';
+  ctx.fillRect(dx-1, dy-9, 34, 7);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(dx, dy-8, 32, 5);
+  if (hp > 0) {
+    const aHpW = Math.max(1, Math.round(32*hp));
+    const aCol = RCOL[a.rank] || '#aaa';
+    ctx.fillStyle = aCol;
+    ctx.fillRect(dx, dy-8, aHpW, 5);
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(dx, dy-8, aHpW, 1);
+    ctx.globalAlpha = 1;
+  }
   // Rank badge + class tag
   ctx.fillStyle=RCOL[a.rank]||'#aaa'; ctx.fillRect(dx,dy-16,14,8);
   ctx.fillStyle='#111'; ctx.font='6px "Press Start 2P"'; ctx.textAlign='center';
@@ -5056,57 +5476,90 @@ function drawAdventurer(a) {
 function drawSnatchAnims() {
   const REACH = 85;
   for (const s of slashAnims) {
-    const progress = 1 - (s.life / s.maxLife); // 0=fresh, 1=expired
+    const progress = 1 - (s.life / s.maxLife);
     // Extend 0–0.38, hold 0.38–0.62, retract 0.62–1.0
     let extFrac;
     if (progress < 0.38)      extFrac = progress / 0.38;
     else if (progress < 0.62) extFrac = 1;
     else                      extFrac = 1 - (progress - 0.62) / 0.38;
     const alpha = progress < 0.78 ? 1 : 1 - (progress - 0.78) / 0.22;
-    const len = REACH * extFrac;
+    const len   = REACH * extFrac;
+    const col   = '#55dd44';
+    const glow  = '#22aa11';
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(player.x+16, player.y+16);
+    ctx.translate(player.x + 16, player.y + 16);
     ctx.rotate(s.angle);
+    ctx.lineCap  = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowBlur  = 8;
+    ctx.shadowColor = glow;
 
-    const FINGERS = [0];
-    for (const off of FINGERS) {
-      const ex = Math.cos(off) * len, ey = Math.sin(off) * len;
-      ctx.strokeStyle = '#55dd44';
-      ctx.lineWidth = 2.5;
-      ctx.shadowBlur = 7;
-      ctx.shadowColor = '#22aa11';
+    // Arm stub — tapered green forearm
+    if (len > 14) {
+      ctx.fillStyle = col;
       ctx.beginPath();
-      // Slight curve: control point bows outward
-      ctx.moveTo(0, 0);
-      ctx.quadraticCurveTo(len * 0.55, ey * 0.3 + Math.sin(off) * len * 0.18, ex, ey);
-      ctx.stroke();
-      // Claw hook at tip
-      if (extFrac > 0.65) {
-        const hookAlpha = (extFrac - 0.65) / 0.35;
-        ctx.globalAlpha = alpha * hookAlpha;
-        ctx.strokeStyle = s.hit ? '#ffdd00' : '#aaffaa';
-        ctx.shadowColor  = s.hit ? '#ff9900' : '#44aa44';
-        ctx.shadowBlur   = s.hit ? 14 : 8;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        // Small curved hook past the tip
-        ctx.arc(ex, ey, 5, off + Math.PI * 0.6, off + Math.PI * 1.3);
-        ctx.stroke();
-        ctx.globalAlpha = alpha;
-      }
+      ctx.moveTo(2, -3.5);
+      ctx.lineTo(len - 16, -2.5);
+      ctx.lineTo(len - 16,  2.5);
+      ctx.lineTo(2,  3.5);
+      ctx.closePath();
+      ctx.fill();
     }
 
-    // Gold coin glow at full reach when hit landed
+    // Goblin hand: palm + 3 clawed fingers, fades in as arm extends
+    if (extFrac > 0.2) {
+      const handT  = Math.min(1, (extFrac - 0.2) / 0.3);
+      ctx.globalAlpha = alpha * handT;
+
+      // Palm blob
+      const palmX = len - 11;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.ellipse(palmX, 0, 8, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3 goblin fingers from knuckle edge, spread in a fan
+      const kx = palmX + 7;
+      const fingers = [
+        { by: -5,  a: -0.22, fl: 11 },  // index
+        { by:  0,  a:  0.0,  fl: 13 },  // middle (longest)
+        { by:  5,  a:  0.22, fl: 10 },  // ring
+      ];
+      ctx.strokeStyle = col;
+      for (const f of fingers) {
+        const ex = kx + Math.cos(f.a) * f.fl;
+        const ey = f.by + Math.sin(f.a) * f.fl;
+        ctx.lineWidth = 2.3;
+        ctx.beginPath();
+        ctx.moveTo(kx, f.by);
+        ctx.quadraticCurveTo(kx + f.fl * 0.5, f.by + Math.sin(f.a) * f.fl * 0.35, ex, ey);
+        ctx.stroke();
+        // Claw tip — sharp nub, glows gold on hit
+        ctx.fillStyle   = s.hit ? '#ccff88' : '#aaffaa';
+        ctx.shadowColor = s.hit ? '#ffcc00' : '#44aa44';
+        ctx.shadowBlur  = s.hit ? 12 : 5;
+        ctx.beginPath();
+        ctx.arc(ex, ey, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle   = col;
+        ctx.shadowColor = glow;
+        ctx.shadowBlur  = 8;
+      }
+
+      ctx.globalAlpha = alpha;
+    }
+
+    // Gold coin burst at full reach on hit
     if (s.hit && extFrac >= 0.9) {
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur  = 18;
       ctx.shadowColor = '#ffaa00';
-      ctx.fillStyle = '#ffd700';
+      ctx.fillStyle   = '#ffd700';
       ctx.beginPath();
       ctx.arc(len, 0, 5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#ffff88';
+      ctx.fillStyle  = '#ffff88';
       ctx.shadowBlur = 0;
       ctx.font = '5px "Press Start 2P"';
       ctx.textAlign = 'center';
@@ -5123,15 +5576,10 @@ function drawFlurryAnims() {
   const CONE_HALF = Math.PI * 50 / 180;
 
   for (const f of flurryAnims) {
-    const progress = 1 - f.life / f.maxLife; // 0=start 1=end
-
-    // Ease-out: blade accelerates then decelerates at end of swing
+    const progress = 1 - f.life / f.maxLife;
     const t = 1 - Math.pow(1 - Math.min(progress / 0.85, 1), 2);
     const swipeAngle = -CONE_HALF + t * CONE_HALF * 2;
-
-    // Fade in instantly, hold, then fade out in last 30%
     const alpha = progress > 0.7 ? 1 - (progress - 0.7) / 0.3 : 1;
-
     const col  = f.hit ? '#ccff22' : '#99ee22';
     const glow = f.hit ? '#aaff00' : '#66cc00';
 
@@ -5140,7 +5588,7 @@ function drawFlurryAnims() {
     ctx.translate(player.x + 16, player.y + 16);
     ctx.rotate(f.angle);
 
-    // Trail sector — shows the swept area so far
+    // Trail sector — swept area so far
     ctx.fillStyle = f.hit ? 'rgba(170,255,34,0.13)' : 'rgba(110,220,10,0.08)';
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -5159,28 +5607,8 @@ function drawFlurryAnims() {
     ctx.stroke();
     ctx.globalAlpha = alpha;
 
-    // Leading blade line — the bright moving edge of the swipe
-    const bx = Math.cos(swipeAngle) * REACH;
-    const by = Math.sin(swipeAngle) * REACH;
-    ctx.strokeStyle = col;
-    ctx.lineWidth   = 3;
-    ctx.shadowBlur  = 14;
-    ctx.shadowColor = glow;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(bx, by);
-    ctx.stroke();
-
-    // Glowing tip on the blade
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowBlur  = 22;
-    ctx.shadowColor = col;
-    ctx.beginPath();
-    ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Trailing glow line slightly behind the blade for motion blur feel
-    const trailOff = CONE_HALF * 0.28;
+    // Motion blur trail line slightly behind the hand
+    const trailOff   = CONE_HALF * 0.28;
     const trailAngle = swipeAngle - trailOff;
     if (trailAngle > -CONE_HALF) {
       const tx2 = Math.cos(trailAngle) * REACH * 0.92;
@@ -5188,13 +5616,63 @@ function drawFlurryAnims() {
       ctx.strokeStyle = col;
       ctx.lineWidth   = 1.5;
       ctx.shadowBlur  = 7;
-      ctx.globalAlpha = alpha * 0.45;
+      ctx.shadowColor = glow;
+      ctx.globalAlpha = alpha * 0.35;
+      ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.lineTo(tx2, ty2);
       ctx.stroke();
       ctx.globalAlpha = alpha;
     }
+
+    // ── Goblin hand at the leading edge of the swipe ──────────────
+    const bx = Math.cos(swipeAngle) * REACH;
+    const by = Math.sin(swipeAngle) * REACH;
+
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(swipeAngle);   // fingers point radially outward from player
+    ctx.lineCap  = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowBlur  = 10;
+    ctx.shadowColor = glow;
+
+    // Small palm
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 6, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 3 short clawed fingers fanning outward (+X = radially outward)
+    const kx = 5;
+    const sfingers = [
+      { by: -4, a: -0.22, fl: 8 },  // index
+      { by:  0, a:  0.0,  fl: 9 },  // middle
+      { by:  4, a:  0.22, fl: 7 },  // ring
+    ];
+    ctx.strokeStyle = col;
+    for (const sf of sfingers) {
+      const ex = kx + Math.cos(sf.a) * sf.fl;
+      const ey = sf.by + Math.sin(sf.a) * sf.fl;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(kx, sf.by);
+      ctx.quadraticCurveTo(kx + sf.fl * 0.5, sf.by + Math.sin(sf.a) * sf.fl * 0.3, ex, ey);
+      ctx.stroke();
+      // Claw tip
+      ctx.fillStyle   = f.hit ? '#ffff88' : col;
+      ctx.shadowColor = f.hit ? '#ffaa00' : glow;
+      ctx.shadowBlur  = f.hit ? 14 : 6;
+      ctx.beginPath();
+      ctx.arc(ex, ey, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle   = col;
+      ctx.shadowColor = glow;
+      ctx.shadowBlur  = 10;
+    }
+
+    ctx.restore(); // end hand transform
 
     // Impact sparks at end of swing when hit
     if (f.hit && progress > 0.72) {
@@ -5208,7 +5686,7 @@ function drawFlurryAnims() {
       }
     }
 
-    ctx.restore();
+    ctx.restore(); // end player transform
   }
 }
 
@@ -5244,9 +5722,24 @@ function drawCircleAnims() {
 
 function drawParticles() {
   for (const p of particles) {
-    ctx.globalAlpha = p.life / p.maxLife;
-    ctx.fillStyle   = p.color;
-    ctx.fillRect(p.x, p.y, p.size, p.size);
+    const t = p.life / p.maxLife;
+    ctx.globalAlpha = t * t;
+    if (p.type === 'spark') {
+      const speed = Math.hypot(p.vx, p.vy) || 1;
+      const trailLen = p.size * 2.5 * t;
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth   = Math.max(0.5, p.size * 0.35 * t);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - (p.vx / speed) * trailLen, p.y - (p.vy / speed) * trailLen);
+      ctx.stroke();
+    } else {
+      const r = Math.max(0.5, p.size * 0.5 * (0.4 + 0.6 * t));
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
 }
@@ -5394,13 +5887,25 @@ function drawPauseOverlay() {
 // ── UI panel ──────────────────────────────────────────────────
 function drawUI() {
   const ux = DW;
-  ctx.fillStyle='#0c0918'; ctx.fillRect(ux,0,UW,CH);
-  ctx.strokeStyle='#3d2458'; ctx.lineWidth=2; ctx.strokeRect(ux,0,UW,CH);
-  ctx.strokeStyle='#28163a'; ctx.lineWidth=1; ctx.strokeRect(ux+4,4,UW-8,CH-8);
+  // Panel background
+  ctx.fillStyle='#0a0716'; ctx.fillRect(ux,0,UW,CH);
+  // Header gradient
+  const hdrGrd = ctx.createLinearGradient(ux, 0, ux, 54);
+  hdrGrd.addColorStop(0, '#1a0a2e');
+  hdrGrd.addColorStop(1, '#0a0716');
+  ctx.fillStyle = hdrGrd;
+  ctx.fillRect(ux, 0, UW, 54);
+  // Panel border + inner border
+  ctx.strokeStyle='#4a2a66'; ctx.lineWidth=2; ctx.strokeRect(ux,0,UW,CH);
+  ctx.strokeStyle='#22103a'; ctx.lineWidth=1; ctx.strokeRect(ux+3,3,UW-6,CH-6);
 
   ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
-  ctx.fillStyle='#c084fc'; ctx.fillText('DUNGEON', ux+UW/2, 26);
-  ctx.fillStyle='#7c3aed'; ctx.fillText('LORD',    ux+UW/2, 42);
+  ctx.save();
+  ctx.shadowBlur = 12; ctx.shadowColor = '#cc88ff';
+  ctx.fillStyle='#cc88ff'; ctx.fillText('DUNGEON', ux+UW/2, 26);
+  ctx.shadowBlur = 8; ctx.shadowColor = '#7c3aed';
+  ctx.fillStyle='#9955ee'; ctx.fillText('LORD',    ux+UW/2, 42);
+  ctx.restore();
   ctx.textAlign='left';
   hr(ux+10, 50);
 
@@ -5451,8 +5956,9 @@ function drawUI() {
 }
 
 function hr(x, y) {
-  ctx.fillStyle='#28163a'; ctx.fillRect(x,y,UW-20,1);
-  ctx.fillStyle='#3d2458'; ctx.fillRect(x,y+1,UW-20,1);
+  ctx.fillStyle='#18082e'; ctx.fillRect(x,y,UW-20,1);
+  ctx.fillStyle='#4a2a66'; ctx.fillRect(x,y+1,UW-20,1);
+  ctx.fillStyle='#1a0a24'; ctx.fillRect(x,y+2,UW-20,1);
 }
 
 function drawBuildUI(ux) {
@@ -5584,11 +6090,7 @@ function drawCombatUI(ux) {
   }
   hr(ux+10, 334);
 
-  const cTotal=Object.keys(crops).length;
-  const cReady=Object.values(crops).filter(v=>(Date.now()-v.plantTime)/1000>=v.growTime).length;
-  ctx.fillStyle='#667744'; ctx.font='6px "Press Start 2P"'; ctx.fillText(cTotal+' soil planted', ux+15, 350);
-  if (cReady>0) { ctx.fillStyle='#88ff44'; ctx.fillText(cReady+' ready to harvest!', ux+15, 364); }
-  hr(ux+10, 378);
+  hr(ux+10, 350);
 
   ctx.fillStyle='#bbaaaa'; ctx.font='7px "Press Start 2P"'; ctx.fillText('◆ F-Infamy: '+fInfamy+'/100', ux+15, 394);
   ctx.fillStyle='#443355'; ctx.font='6px "Press Start 2P"';
@@ -5980,8 +6482,8 @@ function drawInventory() {
   ctx.fillText('X', cx+14, cy+18);
 
   // Tabs
-  const TABS = ['crops','traps','minions','dungeon'];
-  const TAB_LABELS = ['CROPS','TRAPS','MINIONS','DUNGEON'];
+  const TABS = ['food','traps','minions','dungeon'];
+  const TAB_LABELS = ['FOOD','TRAPS','MINIONS','DUNGEON'];
   const tabW = Math.floor((SW-24)/4);
   for (let i=0; i<4; i++) {
     const tx=SX+12+i*(tabW+4), ty=SY+38;
@@ -5999,64 +6501,116 @@ function drawInventory() {
   ctx.fillStyle='#5c3a00'; ctx.fillRect(SX+8,SY+66,SW-16,1);
   ctx.textAlign='left';
 
-  if      (invTab==='crops')   drawInventoryCrops();
+  if      (invTab==='food')    drawInventoryFood();
   else if (invTab==='traps')   drawInventoryTraps();
   else if (invTab==='minions') drawInventoryMinions();
   else                         drawInventoryDungeon();
 }
 
-function drawInventoryCrops() {
-  const items = [
-    { key:'cropTile', name:'DUNGEON SOIL',    desc:'Plant seeds to grow food here',
-      color:'#3a2a12', have:()=>ctInv, placeKey:'cropTile' },
-    { key:'lettuce',  name:'DUNGEON LETTUCE', desc:'15s grow, 10-20 food yield',
-      color:SEEDS.lettuce.col, have:()=>sInv.lettuce, placeKey:'plant_lettuce' },
-    { key:'carrot',   name:'DUNGEON CARROT',  desc:'30s grow, 20-40 food yield',
-      color:SEEDS.carrot.col, have:()=>sInv.carrot, placeKey:'plant_carrot' },
-    { key:'tomato',   name:'DUNGEON TOMATO',  desc:'45s grow, 30-50 food yield',
-      color:SEEDS.tomato.col, have:()=>sInv.tomato, placeKey:'plant_tomato' },
-  ];
-  const _totalH = items.length * 72;
+function drawInventoryFood() {
+  let minionTip = null;
   const INV_VIEW_H = SH - 70;
+  // Compute goblinFarmer inventory groups
+  const farmerGroups = {};
+  for (const m of minionInventory.filter(m => m.type === 'goblinFarmer')) {
+    const k = 'goblinFarmer_' + m.level;
+    if (!farmerGroups[k]) farmerGroups[k] = { type:'goblinFarmer', level:m.level, count:0 };
+    farmerGroups[k].count++;
+  }
+  const fGrpArr = Object.values(farmerGroups);
+  const placedFarmers = placedMinions.filter(m => m.type === 'goblinFarmer');
+  let _totalH = 68 + 8 + 20 + (fGrpArr.length === 0 ? 20 : fGrpArr.length * 78);
+  _totalH += 9 + 16 + (placedFarmers.length === 0 ? 14 : placedFarmers.length * 14 + 14);
   invScrollY = Math.max(0, Math.min(Math.max(0, _totalH - INV_VIEW_H), invScrollY));
   const smy = (mouse.y >= SY+70 && mouse.y <= SY+SH) ? mouse.y + invScrollY : -9999;
   ctx.save();
   ctx.beginPath(); ctx.rect(SX+8, SY+70, SW-16, INV_VIEW_H); ctx.clip();
   ctx.translate(0, -invScrollY);
-  let iy = SY+76;
-  for (const item of items) {
-    const cnt=item.have(), active=placeMode===item.placeKey;
-    const iHov=inR(mouse.x,smy, SX+8,iy, SW-16,68);
-    ctx.fillStyle=iHov?'#1a1000':'#110b00'; ctx.fillRect(SX+8,iy,SW-16,68);
-    ctx.strokeStyle=active?item.color:'#2a1800'; ctx.lineWidth=active?2:1;
-    ctx.strokeRect(SX+8,iy,SW-16,68);
-    ctx.fillStyle=item.color; ctx.fillRect(SX+18,iy+16,28,28);
-    ctx.strokeStyle='#3a2200'; ctx.lineWidth=1; ctx.strokeRect(SX+18,iy+16,28,28);
-    ctx.fillStyle='#ffcc88'; ctx.font='7px "Press Start 2P"'; ctx.fillText(item.name, SX+56, iy+22);
-    ctx.fillStyle='#886644'; ctx.font='5px "Press Start 2P"'; ctx.fillText(item.desc, SX+56, iy+35);
-    ctx.fillStyle=cnt>0?'#88ff88':'#665544'; ctx.font='5px "Press Start 2P"';
-    ctx.fillText('Owned: '+cnt, SX+56, iy+48);
-    const canPlace=cnt>0;
-    const btnLabel = item.key==='cropTile' ? 'PLACE SOIL' : 'PLANT';
-    const bx=SX+SW-100, by=iy+16;
-    const bHov=inR(mouse.x,smy, bx,by, 84,32);
-    ctx.fillStyle=active?'#2a1600':(canPlace?(bHov?'#3a2000':'#221000'):'#0d0a00');
-    ctx.fillRect(bx,by,84,32);
-    ctx.strokeStyle=active?item.color:(canPlace?'#cc8800':'#2a1800'); ctx.lineWidth=1.5;
-    ctx.strokeRect(bx,by,84,32);
-    ctx.fillStyle=active?item.color:(canPlace?'#ffaa00':'#443322');
-    ctx.font='7px "Press Start 2P"'; ctx.textAlign='center';
-    ctx.fillText(active?'CANCEL':btnLabel, bx+42, by+20); ctx.textAlign='left';
-    iy += 72;
+  let iy = SY + 76;
+
+  // — Dungeon Soil row —
+  const soilColor = '#3a2a12';
+  const soilActive = placeMode === 'cropTile';
+  const soilHov = inR(mouse.x, smy, SX+8, iy, SW-16, 68);
+  ctx.fillStyle = soilHov ? '#1a1000' : '#110b00'; ctx.fillRect(SX+8, iy, SW-16, 68);
+  ctx.strokeStyle = soilActive ? soilColor : '#2a1800'; ctx.lineWidth = soilActive ? 2 : 1;
+  ctx.strokeRect(SX+8, iy, SW-16, 68);
+  ctx.fillStyle = soilColor; ctx.fillRect(SX+18, iy+16, 28, 28);
+  ctx.strokeStyle = '#3a2200'; ctx.lineWidth = 1; ctx.strokeRect(SX+18, iy+16, 28, 28);
+  ctx.fillStyle = '#ffcc88'; ctx.font = '7px "Press Start 2P"'; ctx.fillText('DUNGEON SOIL', SX+56, iy+22);
+  ctx.fillStyle = '#886644'; ctx.font = '5px "Press Start 2P"'; ctx.fillText('Convert floor tile to soil', SX+56, iy+35);
+  ctx.fillStyle = ctInv > 0 ? '#88ff88' : '#665544'; ctx.fillText('Owned: ' + ctInv, SX+56, iy+48);
+  const sbx = SX+SW-100, sby = iy+16;
+  const sbHov = inR(mouse.x, smy, sbx, sby, 84, 32);
+  ctx.fillStyle = soilActive ? '#2a1600' : (ctInv > 0 ? (sbHov ? '#3a2000' : '#221000') : '#0d0a00');
+  ctx.fillRect(sbx, sby, 84, 32);
+  ctx.strokeStyle = soilActive ? soilColor : (ctInv > 0 ? '#cc8800' : '#2a1800'); ctx.lineWidth = 1.5;
+  ctx.strokeRect(sbx, sby, 84, 32);
+  ctx.fillStyle = soilActive ? soilColor : (ctInv > 0 ? '#ffaa00' : '#443322');
+  ctx.font = '7px "Press Start 2P"'; ctx.textAlign = 'center';
+  ctx.fillText(soilActive ? 'CANCEL' : 'PLACE SOIL', sbx+42, sby+20); ctx.textAlign = 'left';
+  iy += 68 + 8;
+
+  // — Mushroom Farmers —
+  ctx.fillStyle = '#446633'; ctx.font = '5px "Press Start 2P"';
+  ctx.fillText('MUSHROOM FARMERS:', SX+12, iy+12); iy += 20;
+  if (fGrpArr.length === 0) {
+    ctx.fillStyle = '#334422'; ctx.fillText('None — buy from Shop', SX+12, iy+12); iy += 20;
+  } else {
+    for (const grp of fGrpArr) {
+      const cfg = MINION_TYPES.goblinFarmer;
+      const msr = MINION_SPRS.goblinFarmer;
+      const active = placeMode === 'minion_goblinFarmer';
+      const iHov = inR(mouse.x, smy, SX+8, iy, SW-16, 74);
+      if (iHov) minionTip = { key:'goblinFarmer', level:grp.level };
+      ctx.fillStyle = iHov ? '#111800' : '#0a1000'; ctx.fillRect(SX+8, iy, SW-16, 74);
+      ctx.strokeStyle = active ? cfg.accentColor : '#1a2800'; ctx.lineWidth = active ? 2 : 1;
+      ctx.strokeRect(SX+8, iy, SW-16, 74);
+      sprS(msr.s, msr.c, SX+16, iy+10, 3);
+      ctx.fillStyle = '#aaffaa'; ctx.font = '6px "Press Start 2P"';
+      ctx.fillText(cfg.name + ' Lv' + grp.level, SX+46, iy+20);
+      ctx.fillStyle = '#668844'; ctx.font = '5px "Press Start 2P"';
+      ctx.fillText(cfg.effectDesc(grp.level), SX+46, iy+32);
+      const gfGen = MINION_TYPES.goblinFarmer.foodGenAtLevel(grp.level);
+      ctx.fillStyle = '#55dd88'; ctx.fillText('Gen: +' + gfGen + '/min  Free', SX+46, iy+44);
+      ctx.fillStyle = '#88ff88'; ctx.fillText('x' + grp.count + ' in inventory', SX+46, iy+56);
+      const bx = SX+SW-96, by = iy+16;
+      const bHov = inR(mouse.x, smy, bx, by, 80, 32);
+      ctx.fillStyle = active ? '#1a2800' : (bHov ? '#2a3800' : '#141e00');
+      ctx.fillRect(bx, by, 80, 32);
+      ctx.strokeStyle = active ? cfg.accentColor : '#446622'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(bx, by, 80, 32);
+      ctx.fillStyle = active ? cfg.accentColor : '#88cc44';
+      ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center';
+      ctx.fillText(active ? 'CANCEL' : 'PLACE', bx+40, by+20); ctx.textAlign = 'left';
+      iy += 78;
+    }
+  }
+  ctx.fillStyle = '#2a3800'; ctx.fillRect(SX+8, iy, SW-16, 1); iy += 9;
+  ctx.fillStyle = '#446633'; ctx.font = '5px "Press Start 2P"';
+  ctx.fillText('PLACED (' + placedFarmers.length + '):', SX+12, iy+12); iy += 16;
+  if (placedFarmers.length === 0) {
+    ctx.fillStyle = '#334422'; ctx.fillText('None placed', SX+12, iy+12);
+  } else {
+    for (const m of placedFarmers) {
+      const gfGen = MINION_TYPES.goblinFarmer.foodGenAtLevel(m.level);
+      const status = m.alive ? 'HP:' + m.hp + '/' + m.maxHp : 'DEAD Respawn:' + Math.ceil(m.respawnTimer) + 's';
+      ctx.fillStyle = m.alive ? '#88cc88' : '#aa6644'; ctx.font = '5px "Press Start 2P"';
+      ctx.fillText('Farmer Lv' + m.level + '  (' + m.gx + ',' + m.gy + ')  ' + status + '  +' + gfGen + '/min', SX+12, iy+12);
+      iy += 14;
+    }
+    ctx.fillStyle = '#443322'; ctx.font = '4px "Press Start 2P"';
+    ctx.fillText('Click a farmer in the dungeon to upgrade/pick up', SX+12, iy+12);
   }
   ctx.restore();
   if (_totalH > INV_VIEW_H) {
-    const trackH=INV_VIEW_H-4, maxS=_totalH-INV_VIEW_H;
-    const thumbH=Math.max(20,(INV_VIEW_H/_totalH)*trackH);
-    const thumbY=SY+70+2+(invScrollY/maxS)*(trackH-thumbH);
-    ctx.fillStyle='#3a2200'; ctx.fillRect(SX+SW-8,SY+70+2,5,trackH);
-    ctx.fillStyle='#cc8800'; ctx.fillRect(SX+SW-8,thumbY,5,thumbH);
+    const trackH = INV_VIEW_H - 4, maxS = _totalH - INV_VIEW_H;
+    const thumbH = Math.max(20, (INV_VIEW_H / _totalH) * trackH);
+    const thumbY = SY+70+2 + (invScrollY / maxS) * (trackH - thumbH);
+    ctx.fillStyle = '#3a2200'; ctx.fillRect(SX+SW-8, SY+70+2, 5, trackH);
+    ctx.fillStyle = '#cc8800'; ctx.fillRect(SX+SW-8, thumbY, 5, thumbH);
   }
+  if (minionTip) drawMinionTooltip(minionTip.key, minionTip.level);
 }
 
 // ── Trap tooltip panel (shared by shop + inventory) ───────────
@@ -6314,7 +6868,7 @@ function inventoryClick(mx, my) {
   if (inR(mx,my, cx,cy, 28,28)) { invOpen=false; placeMode=null; return; }
 
   // Tabs
-  const TABS=['crops','traps','minions','dungeon'];
+  const TABS=['food','traps','minions','dungeon'];
   const tabW=Math.floor((SW-24)/4);
   for (let i=0; i<4; i++) {
     const tx=SX+12+i*(tabW+4), ty=SY+38;
@@ -6325,29 +6879,37 @@ function inventoryClick(mx, my) {
   if (my < SY+70 || my > SY+SH) return;
   const smy = my + invScrollY;
 
-  // Crop rows
-  if (invTab==='crops') {
-    const items=[
-      { key:'cropTile', placeKey:'cropTile',    have:()=>ctInv },
-      { key:'lettuce',  placeKey:'plant_lettuce',have:()=>sInv.lettuce },
-      { key:'carrot',   placeKey:'plant_carrot', have:()=>sInv.carrot },
-      { key:'tomato',   placeKey:'plant_tomato', have:()=>sInv.tomato },
-    ];
-    let iy=SY+76;
-    for (const item of items) {
-      const bx=SX+SW-100, by=iy+16;
-      if (inR(mx,smy, bx,by, 84,32)) {
-        if (placeMode===item.placeKey) {
-          placeMode=null;
-        } else if (item.have()>0) {
-          placeMode=item.placeKey;
-          invOpen=false;
-        } else {
-          showMsg('None in inventory!  Buy from Shop.');
+  // Food tab rows (soil tile + goblinFarmer)
+  if (invTab==='food') {
+    let iy = SY + 76;
+    // Soil PLACE button
+    const sbx=SX+SW-100, sby=iy+16;
+    if (inR(mx,smy, sbx,sby, 84,32)) {
+      if (placeMode==='cropTile') { placeMode=null; }
+      else if (ctInv>0) { placeMode='cropTile'; invOpen=false; }
+      else showMsg('No Dungeon Soil!  Buy from Shop.');
+      return;
+    }
+    iy += 68 + 8 + 20; // soil row + divider + header label
+    // goblinFarmer groups
+    const farmerGroups = {};
+    for (const m of minionInventory.filter(m=>m.type==='goblinFarmer')) {
+      const k='goblinFarmer_'+m.level;
+      if (!farmerGroups[k]) farmerGroups[k]={type:'goblinFarmer',level:m.level,count:0};
+      farmerGroups[k].count++;
+    }
+    const fGrpArr = Object.values(farmerGroups);
+    if (fGrpArr.length === 0) { iy += 20; }
+    else {
+      for (const grp of fGrpArr) {
+        const bx=SX+SW-96, by=iy+16;
+        if (inR(mx,smy, bx,by, 80,32)) {
+          if (placeMode==='minion_goblinFarmer') { placeMode=null; }
+          else { placeMode='minion_goblinFarmer'; invOpen=false; }
+          return;
         }
-        return;
+        iy += 78;
       }
-      iy+=72;
     }
   }
 
@@ -6389,17 +6951,27 @@ function inventoryClick(mx, my) {
 
   // Minion rows
   if (invTab==='minions') {
-    let iy=SY+76;
-    iy += 20; // "IN INVENTORY" label
-    if (minionInventory.length === 0) { iy += 20; }
-    else {
-      const groups={};
-      for (const m of minionInventory) {
-        const k=m.type+'_'+m.level;
-        if (!groups[k]) groups[k]={type:m.type,level:m.level,count:0};
-        groups[k].count++;
+    const nonFarmerInv = minionInventory.filter(m => m.type !== 'goblinFarmer');
+    const aliveInv = nonFarmerInv.filter(m => m.alive !== false);
+    const deadInv  = nonFarmerInv.filter(m => m.alive === false);
+    function makeGroups(arr) {
+      const g = {};
+      for (const m of arr) {
+        const k = m.type+'_'+m.level;
+        if (!g[k]) g[k] = { type:m.type, level:m.level, count:0 };
+        g[k].count++;
       }
-      for (const grp of Object.values(groups)) {
+      return Object.values(g);
+    }
+    const aliveGrps = makeGroups(aliveInv);
+    const deadGrps  = makeGroups(deadInv);
+
+    let iy = SY + 76;
+    // ALIVE section
+    iy += 20; // header
+    if (aliveGrps.length === 0) { iy += 20; }
+    else {
+      for (const grp of aliveGrps) {
         const bx=SX+SW-96, by=iy+16;
         if (inR(mx,smy, bx,by, 80,32)) {
           const placeKey='minion_'+grp.type;
@@ -6410,6 +6982,23 @@ function inventoryClick(mx, my) {
         iy += 78;
       }
     }
+    // DEAD section
+    iy += 9; // divider
+    iy += 16; // header
+    if (deadGrps.length === 0) { iy += 20; }
+    else {
+      for (const grp of deadGrps) {
+        const bx=SX+SW-96, by=iy+16;
+        if (inR(mx,smy, bx,by, 80,32)) {
+          const placeKey='minion_'+grp.type;
+          if (placeMode===placeKey) { placeMode=null; }
+          else { placeMode=placeKey; invOpen=false; }
+          return;
+        }
+        iy += 78;
+      }
+    }
+    // PLACED section — no buttons (interact via dungeon click)
   }
 
   // Dungeon tab
@@ -6750,7 +7339,7 @@ function updateMinions(dt) {
           projectiles.push({
             x: mcx, y: mcy,
             vx: (dx/dist)*200, vy: (dy/dist)*200,
-            dmg: stats.atk, life: 5.0, owner: 'minion_goblinArrow',
+            dmg: stats.atk, life: 5.0, owner: 'minion_goblinArrow', minionRef: m,
           });
           m.arrowCd = 2.0 + Math.random() * 1.0;
           m.combatTimer = 5;
@@ -6768,7 +7357,7 @@ function updateMinions(dt) {
           projectiles.push({
             x: mcx, y: mcy,
             vx: (dx/dist)*180, vy: (dy/dist)*180,
-            dmg: stats.atk, life: 6.0, owner: 'minion_goblinFirebolt',
+            dmg: stats.atk, life: 6.0, owner: 'minion_goblinFirebolt', minionRef: m,
           });
           m.fireCd = stats.atkCdMax;
           m.combatTimer = 5;
@@ -6979,7 +7568,11 @@ function minionContextClick(mx, my) {
   if (inR(mx,my, px+6,py+76, pw-12,22)) {
     placedMinions.splice(placedMinions.indexOf(m), 1);
     const stats = cfg.statsAtLevel(m.level);
-    m.alive = true; m.hp = stats.hp; m.maxHp = stats.hp; m.respawnTimer = 0;
+    if (m.alive) {
+      m.hp = stats.hp; m.maxHp = stats.hp; m.respawnTimer = 0;
+    } else {
+      m.respawnTimer = cfg.respawnTime; // reset to full for re-placement
+    }
     minionInventory.push(m);
     minionContext = null;
     showMsg(cfg.name+' picked up!');
@@ -7115,16 +7708,28 @@ function drawMinionTooltip(key, level) {
 function drawInventoryMinions() {
   let minionTip = null;
   const INV_VIEW_H = SH - 70;
-  // Compute groups
-  const groups = {};
-  for (const m of minionInventory) {
-    const k = m.type+'_'+m.level;
-    if (!groups[k]) groups[k] = { type:m.type, level:m.level, count:0 };
-    groups[k].count++;
+
+  const nonFarmerInv = minionInventory.filter(m => m.type !== 'goblinFarmer');
+  const aliveInv = nonFarmerInv.filter(m => m.alive !== false);
+  const deadInv  = nonFarmerInv.filter(m => m.alive === false);
+
+  function makeGroups(arr) {
+    const g = {};
+    for (const m of arr) {
+      const k = m.type+'_'+m.level;
+      if (!g[k]) g[k] = { type:m.type, level:m.level, count:0 };
+      g[k].count++;
+    }
+    return Object.values(g);
   }
-  const grpArr = Object.values(groups);
-  let _totalH = 20 + (grpArr.length === 0 ? 20 : grpArr.length * 78);
-  _totalH += 9 + 16 + (placedMinions.length === 0 ? 14 : placedMinions.length * 14 + 14);
+  const aliveGrps = makeGroups(aliveInv);
+  const deadGrps  = makeGroups(deadInv);
+  const shownPlaced = placedMinions.filter(m => m.type !== 'goblinFarmer');
+
+  let _totalH = 20 + (aliveGrps.length === 0 ? 20 : aliveGrps.length * 78);
+  _totalH += 9 + 16 + (deadGrps.length === 0 ? 20 : deadGrps.length * 78);
+  _totalH += 9 + 16 + (shownPlaced.length === 0 ? 14 : shownPlaced.length * 14 + 14);
+
   invScrollY = Math.max(0, Math.min(Math.max(0, _totalH - INV_VIEW_H), invScrollY));
   const smy = (mouse.y >= SY+70 && mouse.y <= SY+SH) ? mouse.y + invScrollY : -9999;
   ctx.save();
@@ -7132,66 +7737,74 @@ function drawInventoryMinions() {
   ctx.translate(0, -invScrollY);
   let iy = SY + 76;
 
+  function drawMinionRow(grp, isDead) {
+    const cfg = MINION_TYPES[grp.type];
+    const msr = MINION_SPRS[grp.type];
+    const active = placeMode === 'minion_'+grp.type;
+    const iHov = inR(mouse.x, smy, SX+8, iy, SW-16, 74);
+    if (iHov) minionTip = { key: grp.type, level: grp.level };
+    ctx.fillStyle = iHov ? (isDead?'#1a0800':'#111800') : (isDead?'#100500':'#0a1000');
+    ctx.fillRect(SX+8, iy, SW-16, 74);
+    ctx.strokeStyle = active ? cfg.accentColor : (isDead?'#331400':'#1a2800');
+    ctx.lineWidth = active ? 2 : 1;
+    ctx.strokeRect(SX+8, iy, SW-16, 74);
+    sprS(msr.s, msr.c, SX+16, iy+10, 3);
+    ctx.fillStyle = isDead ? '#aa7755' : '#aaffaa'; ctx.font = '6px "Press Start 2P"';
+    ctx.fillText(cfg.name+' Lv'+grp.level, SX+46, iy+20);
+    ctx.fillStyle = '#668844'; ctx.font = '5px "Press Start 2P"';
+    if (isDead) {
+      ctx.fillStyle = '#cc4422'; ctx.fillText('DEAD — waiting to be placed', SX+46, iy+32);
+    } else {
+      ctx.fillText(cfg.effectDesc(grp.level), SX+46, iy+32);
+      const stats = cfg.statsAtLevel(grp.level);
+      ctx.fillStyle = '#88ff88'; ctx.fillText('HP: '+stats.hp+'/'+stats.hp, SX+46, iy+44);
+    }
+    const foodTotal = grp.level * cfg.foodPerLevel;
+    ctx.fillStyle = foodTotal === 0 ? '#55dd88' : '#ff9944';
+    ctx.fillText((foodTotal === 0 ? 'Food: Free' : 'Food: '+foodTotal+'/min')+'  x'+grp.count, SX+46, iy+56);
+    const bx = SX+SW-96, by = iy+16;
+    const bHov = inR(mouse.x, smy, bx, by, 80, 32);
+    ctx.fillStyle = active ? (isDead?'#2a0800':'#1a2800') : (bHov ? (isDead?'#3a1000':'#2a3800') : (isDead?'#1a0500':'#141e00'));
+    ctx.fillRect(bx, by, 80, 32);
+    ctx.strokeStyle = active ? cfg.accentColor : (isDead?'#884422':'#446622'); ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx, by, 80, 32);
+    ctx.fillStyle = active ? cfg.accentColor : (isDead?'#ff8844':'#88cc44');
+    ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center';
+    ctx.fillText(active?'CANCEL':'PLACE', bx+40, by+20); ctx.textAlign = 'left';
+    iy += 78;
+  }
+
+  // — Alive section —
   ctx.fillStyle = '#446633'; ctx.font = '5px "Press Start 2P"';
-  ctx.fillText('IN INVENTORY:', SX+12, iy+12); iy += 20;
-  if (grpArr.length === 0) {
+  ctx.fillText('ALIVE ('+aliveInv.length+'):', SX+12, iy+12); iy += 20;
+  if (aliveGrps.length === 0) {
     ctx.fillStyle = '#334422'; ctx.fillText('None — buy minions from the shop', SX+12, iy+12); iy += 20;
   } else {
-    for (const grp of grpArr) {
-      const cfg = MINION_TYPES[grp.type];
-      const msr = MINION_SPRS[grp.type];
-      const active = placeMode === 'minion_'+grp.type;
-      const iHov = inR(mouse.x,smy, SX+8,iy, SW-16,74);
-      if (iHov) minionTip = { key: grp.type, level: grp.level };
-      ctx.fillStyle = iHov?'#111800':'#0a1000'; ctx.fillRect(SX+8,iy,SW-16,74);
-      ctx.strokeStyle = active?cfg.accentColor:'#1a2800'; ctx.lineWidth = active?2:1;
-      ctx.strokeRect(SX+8,iy,SW-16,74);
-      sprS(msr.s, msr.c, SX+16, iy+10, 3);
-      ctx.fillStyle = '#aaffaa'; ctx.font = '6px "Press Start 2P"';
-      ctx.fillText(cfg.name+' Lv'+grp.level, SX+46, iy+20);
-      ctx.fillStyle = '#668844'; ctx.font = '5px "Press Start 2P"';
-      ctx.fillText(cfg.effectDesc(grp.level), SX+46, iy+32);
-      let foodTotalStr, foodTotalCol;
-      if (grp.type === 'goblinFarmer') {
-        const gfGen = MINION_TYPES.goblinFarmer.foodGenAtLevel(grp.level);
-        foodTotalStr = 'Gen: +'+gfGen+'/min  Free'; foodTotalCol = '#55dd88';
-      } else {
-        const foodTotal = grp.level * cfg.foodPerLevel;
-        foodTotalStr = foodTotal === 0 ? 'Food: Free' : 'Food: '+foodTotal+'/min';
-        foodTotalCol = foodTotal === 0 ? '#55dd88' : '#ff9944';
-      }
-      ctx.fillStyle = foodTotalCol;
-      ctx.fillText(foodTotalStr, SX+46, iy+44);
-      ctx.fillStyle = '#88ff88'; ctx.fillText('x'+grp.count+' in inventory', SX+46, iy+56);
-      const bx = SX+SW-96, by = iy+16;
-      const bHov = inR(mouse.x,smy, bx,by, 80,32);
-      ctx.fillStyle = active?'#1a2800':(bHov?'#2a3800':'#141e00');
-      ctx.fillRect(bx,by,80,32);
-      ctx.strokeStyle = active?cfg.accentColor:'#446622'; ctx.lineWidth = 1.5;
-      ctx.strokeRect(bx,by,80,32);
-      ctx.fillStyle = active?cfg.accentColor:'#88cc44';
-      ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center';
-      ctx.fillText(active?'CANCEL':'PLACE', bx+40, by+20); ctx.textAlign = 'left';
-      iy += 78;
-    }
+    for (const grp of aliveGrps) drawMinionRow(grp, false);
   }
-  ctx.fillStyle = '#2a3800'; ctx.fillRect(SX+8,iy,SW-16,1); iy += 9;
+
+  // — Dead section —
+  ctx.fillStyle = '#2a3800'; ctx.fillRect(SX+8, iy, SW-16, 1); iy += 9;
+  ctx.fillStyle = '#884422'; ctx.font = '5px "Press Start 2P"';
+  ctx.fillText('DEAD ('+deadInv.length+'):', SX+12, iy+12); iy += 16;
+  if (deadGrps.length === 0) {
+    ctx.fillStyle = '#334422'; ctx.fillText('None', SX+12, iy+12); iy += 20;
+  } else {
+    for (const grp of deadGrps) drawMinionRow(grp, true);
+  }
+
+  // — Placed section —
+  ctx.fillStyle = '#2a3800'; ctx.fillRect(SX+8, iy, SW-16, 1); iy += 9;
   ctx.fillStyle = '#446633'; ctx.font = '5px "Press Start 2P"';
-  ctx.fillText('PLACED ('+placedMinions.length+'):', SX+12, iy+12); iy += 16;
-  if (placedMinions.length === 0) {
+  ctx.fillText('PLACED ('+shownPlaced.length+'):', SX+12, iy+12); iy += 16;
+  if (shownPlaced.length === 0) {
     ctx.fillStyle = '#334422'; ctx.fillText('None placed', SX+12, iy+12);
   } else {
-    for (const m of placedMinions) {
+    for (const m of shownPlaced) {
       const cfg = MINION_TYPES[m.type];
       const status = m.alive ? 'HP:'+m.hp+'/'+m.maxHp : 'DEAD Respawn:'+Math.ceil(m.respawnTimer)+'s';
-      let foodTag;
-      if (m.type === 'goblinFarmer') {
-        const gfGen = MINION_TYPES.goblinFarmer.foodGenAtLevel(m.level);
-        foodTag = '  +'+gfGen+'/min';
-      } else {
-        const foodCost = m.level * cfg.foodPerLevel;
-        foodTag = foodCost === 0 ? '  Food:Free' : '  Food:'+foodCost+'/m';
-      }
+      const foodCost = m.level * cfg.foodPerLevel;
+      const foodTag = foodCost === 0 ? '  Food:Free' : '  Food:'+foodCost+'/m';
       ctx.fillStyle = m.alive?'#88cc88':'#aa6644'; ctx.font = '5px "Press Start 2P"';
       ctx.fillText(cfg.shortName+' Lv'+m.level+'  ('+m.gx+','+m.gy+')  '+status+foodTag, SX+12, iy+12);
       iy += 14;
@@ -7202,7 +7815,7 @@ function drawInventoryMinions() {
   ctx.restore();
   if (_totalH > INV_VIEW_H) {
     const trackH=INV_VIEW_H-4, maxS=_totalH-INV_VIEW_H;
-    const thumbH=Math.max(20,(INV_VIEW_H/_totalH)*trackH);
+    const thumbH=Math.max(20,(_totalH>INV_VIEW_H?(INV_VIEW_H/_totalH)*trackH:trackH));
     const thumbY=SY+70+2+(invScrollY/maxS)*(trackH-thumbH);
     ctx.fillStyle='#1a2800'; ctx.fillRect(SX+SW-8,SY+70+2,5,trackH);
     ctx.fillStyle='#446633'; ctx.fillRect(SX+SW-8,thumbY,5,thumbH);
@@ -7356,7 +7969,7 @@ function drawShop() {
   ctx.fillText('X', cx+14, cy+18);
   // Tabs
   const TAB_W = 75, TAB_GAP = 4;
-  const tabs = [['seeds','SEEDS'],['traps','TRAPS'],['minions','MNNS'],['dungeon','DNGN']];
+  const tabs = [['food','FOOD'],['traps','TRAPS'],['minions','MNNS'],['dungeon','DNGN']];
   for (let i=0; i<4; i++) {
     const tx=SX+12+i*(TAB_W+TAB_GAP), ty=SY+40;
     const active=shopTab===tabs[i][0];
@@ -7371,7 +7984,7 @@ function drawShop() {
   ctx.fillStyle='#3d2458'; ctx.fillRect(SX+8,SY+70,SW-16,1);
   ctx.textAlign='left';
 
-  const items = shopTab==='seeds' ? shopItems() : shopTab==='traps' ? trapShopItems() : shopTab==='minions' ? minionShopItems() : dungeonShopItems();
+  const items = shopTab==='food' ? foodShopItems() : shopTab==='traps' ? trapShopItems() : shopTab==='minions' ? minionShopItems() : dungeonShopItems();
   // Compute total content height and clamp scroll
   let _sh = 0; for (const it of items) _sh += it.food !== undefined ? 94 : 80;
   const SHOP_VIEW_H = SH - 70;
@@ -7387,13 +8000,15 @@ function drawShop() {
     const hasFood = item.food !== undefined;
     const rowH = hasFood ? 94 : 80;
     const iHov=inR(mouse.x,smy, SX+8,iy, SW-16,rowH);
-    if (iHov && shopTab === 'minions' && item.key) minionTipKey = item.key;
+    if (iHov && (shopTab === 'minions' || (shopTab === 'food' && item.type === 'minion')) && item.key) minionTipKey = item.key;
     if (iHov && shopTab === 'traps' && item.type === 'trap') trapTipKey = item.key;
     ctx.fillStyle=iHov?'#1a1030':'#120820'; ctx.fillRect(SX+8,iy,SW-16,rowH);
     ctx.strokeStyle='#2a1848'; ctx.lineWidth=1; ctx.strokeRect(SX+8,iy,SW-16,rowH);
+    const paysFood = item.type === 'minion';
     ctx.fillStyle='#ffffff'; ctx.font='8px "Press Start 2P"'; ctx.fillText(item.name, SX+20, iy+18);
     ctx.fillStyle='#9988aa'; ctx.font='6px "Press Start 2P"'; ctx.fillText(item.desc, SX+20, iy+32);
-    ctx.fillStyle='#ffd700'; ctx.font='7px "Press Start 2P"'; ctx.fillText('Cost: '+item.cost+' coins', SX+20, iy+47);
+    ctx.fillStyle=paysFood?'#55dd88':'#ffd700'; ctx.font='7px "Press Start 2P"';
+    ctx.fillText('Cost: '+item.cost+(paysFood?' food':' coins'), SX+20, iy+47);
     if (hasFood) {
       let foodStr, foodCol;
       if (item.foodGen !== undefined) {
@@ -7414,7 +8029,7 @@ function drawShop() {
       ctx.fillStyle = '#888866'; ctx.font = '5px "Press Start 2P"';
       ctx.fillText('Requires: Goblin Minion Lv5', SX+20, iy+(hasFood?82:68));
     }
-    const canBuy=!item.maxed&&!item.locked&&coins>=item.cost, bx=SX+SW-104, by=iy+20;
+    const canBuy=!item.maxed&&!item.locked&&(paysFood?food:coins)>=item.cost, bx=SX+SW-104, by=iy+20;
     const bHov=inR(mouse.x,smy, bx,by, 88,32);
     ctx.fillStyle=item.locked?'#1a1a0a':(canBuy?(bHov?'#1a4a1a':'#0f3010'):'#0d0a12'); ctx.fillRect(bx,by,88,32);
     ctx.strokeStyle=item.locked?'#555533':(canBuy?'#44ff44':'#2a2233'); ctx.lineWidth=1.5; ctx.strokeRect(bx,by,88,32);
@@ -7458,11 +8073,24 @@ function drawSkillBar() {
     const sel = pendingSkill && pendingSkill.type === 'slot' && pendingSkill.idx === i;
 
     const rc = skillColor(key);
-    ctx.fillStyle = '#0c091899';
+    const ready = sk && cd <= 0;
+    // Slot background
+    ctx.fillStyle = '#080612cc';
     ctx.fillRect(bx, sy, SB_W, SB_H);
-    ctx.strokeStyle = sel ? '#88bbff' : (sk ? rc : '#2a1848');
-    ctx.lineWidth = sel ? 2 : 1.5;
-    ctx.strokeRect(bx, sy, SB_W, SB_H);
+    // Glow for ready skills
+    if (ready && !sel) {
+      ctx.save();
+      ctx.shadowBlur  = 10;
+      ctx.shadowColor = rc;
+      ctx.strokeStyle = rc;
+      ctx.lineWidth   = 1.5;
+      ctx.strokeRect(bx, sy, SB_W, SB_H);
+      ctx.restore();
+    } else {
+      ctx.strokeStyle = sel ? '#88bbff' : (sk ? rc + '88' : '#2a1840');
+      ctx.lineWidth   = sel ? 2 : 1;
+      ctx.strokeRect(bx, sy, SB_W, SB_H);
+    }
 
     ctx.fillStyle = i >= 4 ? '#44aa77' : '#4466aa';
     ctx.font = '5px "Press Start 2P"';
@@ -7475,9 +8103,9 @@ function drawSkillBar() {
     ctx.fillText(sk ? sk.shortName : '---', bx + SB_W / 2, sy + 28);
 
     if (cd > 0 && sk) {
-      ctx.fillStyle = '#00000077';
+      ctx.fillStyle = '#00000088';
       ctx.fillRect(bx, sy, SB_W, SB_H * (cd / sk.cooldown));
-      ctx.fillStyle = '#aaaacc';
+      ctx.fillStyle = '#ccccee';
       ctx.font = '6px "Press Start 2P"';
       ctx.fillText(cd.toFixed(1) + 's', bx + SB_W / 2, sy + SB_H / 2 + 3);
     }
@@ -7963,7 +8591,7 @@ function drawFocusPrompt() {
     '2. Open Shop',
     '3. Adventurers raid every 60s!',
     '4. Kill them for coins and infamy!',
-    '5. Plant crops to get food for minion upkeep',
+    '5. Buy minions to defend your dungeon!',
     'WASD=Move  Click=Basic Attack  P=Pause',
   ].forEach((t,i) => ctx.fillText(t, DW/2-130, CH/2+35+i*17));
   ctx.textAlign='left';
