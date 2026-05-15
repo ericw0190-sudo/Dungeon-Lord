@@ -595,13 +595,13 @@ const SKILLS = {
   },
   goblinEscape: {
     name: 'Goblin Maneuver', shortName: 'MNV',
-    desc: 'Leap 3 tiles toward mouse. Invincible while leaping. +20% SPD for 0.5s after landing. 5s CD.',
+    desc: 'Leap 3 tiles toward mouse. Invincible while leaping. +50% SPD for 0.5s after landing. 5s CD.',
     cooldown: 5, rank: 'base',
     tips: [
       'Instantly leap 3 tiles toward the cursor.',
       'You are invincible to all damage during the leap.',
       'Invincibility ends the moment the leap finishes.',
-      'After landing: gain +20% move speed for 0.5 seconds.',
+      'After landing: gain +50% move speed for 0.5 seconds.',
     ],
     use(idx) { goblinEscapeLeap(); },
   },
@@ -1464,7 +1464,7 @@ function updateMovement(dt) {
     if (inHeavensWake(player.x+16, player.y+16)) { vx *= 0.5; vy *= 0.5; }
     if ((heavensWake && heavensWake.phase === 'casting') || fireboltCast || selfHealCast) { vx *= 0.2; vy *= 0.2; }
     if (player.raceSkill === 'goblinRace' && player.hp < player.maxHp * 0.3) { vx *= 1.25; vy *= 1.25; }
-    if (goblinEscapeBoostTimer > 0) { vx *= 1.2; vy *= 1.2; goblinEscapeBoostTimer -= dt; }
+    if (goblinEscapeBoostTimer > 0) { vx *= 1.5; vy *= 1.5; goblinEscapeBoostTimer -= dt; }
     if (quickFeetTimer > 0) { vx *= 1.4; vy *= 1.4; quickFeetTimer -= dt; }
     const nx = player.x + vx*dt, ny = player.y + vy*dt;
     if (canMove(nx, player.y, 32, 32)) player.x = nx;
@@ -1905,7 +1905,7 @@ function updateAdventurers(dt) {
     }
 
     // Emberbolt fire arrow dodge
-    if (a.enteredDungeon && a.alive) {
+    if (a.alive) {
       for (const p of projectiles) {
         if (p.owner !== 'trap_emberbolt') continue;
         const pSpd = Math.hypot(p.vx, p.vy) || 1;
@@ -1922,7 +1922,7 @@ function updateAdventurers(dt) {
     }
 
     // Trap trigger (works anywhere in the world)
-    if (a.enteredDungeon && a.alive) {
+    if (a.alive) {
       const tgx = Math.floor((a.x+16)/TILE), tgy = Math.floor((a.y+16)/TILE);
       const tRes = resolveWorldTile(a.x+16, a.y+16);
       if (tRes && tRes.grid[tRes.lgy][tRes.lgx] === T_TRAP) {
@@ -4088,7 +4088,7 @@ function uiClick(mx, my) {
   if (inR(mx,my, ux+10,155, UW-20,36)) { if (!heart && !heartCarried) placeMode = placeMode==='heart' ? null : 'heart'; return; }
   if (inR(mx,my, ux+10,232, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } shopOpen = !shopOpen; if (shopOpen) { skillMenuOpen = false; invOpen = false; pendingSkill = null; shopScrollY = 0; } return; }
   if (inR(mx,my, ux+10,266, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } skillMenuOpen = !skillMenuOpen; if (skillMenuOpen) { shopOpen = false; invOpen = false; skillScrollY = 0; } else { pendingSkill = null; } return; }
-  if (inR(mx,my, ux+10,300, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } invOpen = !invOpen; if (invOpen) { shopOpen = false; skillMenuOpen = false; pendingSkill = null; invTab = 'traps'; invScrollY = 0; } return; }
+  if (inR(mx,my, ux+10,300, UW-20,28)) { if (heartCarried) { showMsg('Place the Heart down first!'); return; } invOpen = !invOpen; if (invOpen) { shopOpen = false; skillMenuOpen = false; pendingSkill = null; invScrollY = 0; } return; }
   if (inR(mx,my, ux+10,421, UW-20,28)) { if (heartCarried) showMsg('Place Heart down first!'); else if (!heart) showMsg('Place Heart first!'); else startRaid(); }
 }
 
@@ -4165,7 +4165,7 @@ function shopClick(mx, my) {
   if (inR(mx,my, SX+12,SY+40, TAB_W,24))                      { shopTab='food';    shopScrollY=0; return; }
   if (inR(mx,my, SX+12+(TAB_W+TAB_GAP),SY+40, TAB_W,24))      { shopTab='traps';   shopScrollY=0; return; }
   if (inR(mx,my, SX+12+(TAB_W+TAB_GAP)*2,SY+40, TAB_W,24))    { shopTab='minions'; shopScrollY=0; return; }
-  if (inR(mx,my, SX+12+(TAB_W+TAB_GAP)*3,SY+40, TAB_W,24))    { shopTab='dungeon'; shopScrollY=0; return; }
+  if (inR(mx,my, SX+12+(TAB_W+TAB_GAP)*3,SY+40, TAB_W,24))    { shopTab='rooms'; shopScrollY=0; return; }
 
   // Apply scroll offset for content area clicks
   const SHOP_CTOP = SY + 70, SHOP_CBOT = SY + SH;
@@ -4233,7 +4233,7 @@ function shopClick(mx, my) {
       }
       iy += rowH;
     }
-  } else if (shopTab === 'dungeon') {
+  } else if (shopTab === 'rooms') {
     const items = dungeonShopItems();
     let iy = SY + 76;
     for (const item of items) {
@@ -4341,14 +4341,13 @@ function draw() {
   // ── World view (camera-transformed) ─────────────────────────
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, DW, CH); ctx.clip();
-  ctx.fillStyle = '#100a04'; ctx.fillRect(0, 0, DW, CH);
+  ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, DW, CH);
   ctx.setTransform(
     cam.zoom * _gameScale * DPR, 0, 0, cam.zoom * _gameScale * DPR,
     (_gameOx - cam.wx * cam.zoom * _gameScale) * DPR,
     (_gameOy - cam.wy * cam.zoom * _gameScale) * DPR
   );
   if (screenShake && (screenShake.x || screenShake.y)) ctx.translate(screenShake.x, screenShake.y);
-  drawWasteland();
   drawWorldCorridors();
   drawExtraRooms();
   drawDungeon();
@@ -4773,368 +4772,6 @@ function fitCamera() {
 
 // Floor tile shades
 const FC = ['#1c1830','#1e1b32','#201d36'];
-
-// Deterministic per-tile hash for wasteland decoration
-function wh(gx, gy) {
-  let h = (gx * 374761393 + gy * 1073741789) | 0;
-  h = (h ^ (h >>> 13)) * 1664525 + 1013904223 | 0;
-  h = (h ^ (h >>> 16)) >>> 0;
-  return h;
-}
-
-
-// ── Polluted ponds ─────────────────────────────────────────────
-// One pond candidate per POND_CHUNK×POND_CHUNK area; ~1 in 6 chunks has a pond.
-// POND_MARGIN keeps centers in the inner region so adjacent-chunk ponds can't overlap.
-const POND_CHUNK  = 20;  // chunk size in tiles (increased to space ponds out)
-const POND_R      = 3;   // pond radius (tiles)
-const POND_MARGIN = 5;   // center kept at least this many tiles from chunk edge
-const POND_EXCL   = 8;   // tile buffer from dungeon edge where ponds can't center
-
-function pondAt(gx, gy) {
-  const chX  = Math.floor(gx / POND_CHUNK);
-  const chY  = Math.floor(gy / POND_CHUNK);
-  const inner = POND_CHUNK - POND_MARGIN * 2;  // 10 — usable interior width
-  for (let dcy = -1; dcy <= 1; dcy++) {
-    for (let dcx = -1; dcx <= 1; dcx++) {
-      const cx = chX + dcx, cy = chY + dcy;
-      const hc = wh(cx * 37 + 11, cy * 53 + 7);
-      if (hc % 6 !== 0) continue;                     // ~1/6 chunks have a pond (50% fewer)
-      // Constrain center to chunk interior — guarantees no inter-chunk overlap
-      const pcx = cx * POND_CHUNK + POND_MARGIN + (hc >>  4) % inner;
-      const pcy = cy * POND_CHUNK + POND_MARGIN + (hc >> 10) % inner;
-      // Exclude pond centers within POND_EXCL tiles of the dungeon
-      if (pcx > -POND_EXCL && pcx < GRID + POND_EXCL &&
-          pcy > -POND_EXCL && pcy < GRID + POND_EXCL) continue;
-      const dist = Math.hypot(gx - pcx, gy - pcy);
-      // Slightly irregular radius per tile
-      const jitter = 1 + 0.2 * (((wh(gx + 3, gy + 5) >> 5) & 7) / 7 - 0.5);
-      if (dist < POND_R * jitter)     return 'water';
-      if (dist < POND_R * jitter + 1) return 'bank';
-    }
-  }
-  return null;
-}
-
-function drawDeadTree(px, py, h, dc) {
-  if (!dc) dc = ctx;
-  const bx   = px + (TILE >> 1) - 2;
-  const by   = py + TILE - 3;
-  const bark = '#484848', dark = '#282828', hi = '#626262';
-
-  switch (h % 5) {
-
-    case 0: { // ── Tall birch — thin trunk, sparse twigs near top ──────
-      const th = 62 + (h >> 4 & 0xe);
-      dc.fillStyle = dark;
-      dc.fillRect(bx-2, by-3, 2, 3); dc.fillRect(bx+3, by-2, 3, 2);
-      dc.fillStyle = bark;
-      dc.fillRect(bx+1, by-3, 2, 3);
-      dc.fillRect(bx, by-th, 3, th);
-      dc.fillStyle = hi;  dc.fillRect(bx, by-th, 1, th);
-      dc.fillStyle = dark; dc.fillRect(bx+2, by-th+2, 1, th-2);
-      const mid = by - (th*0.5)|0;
-      dc.fillStyle = bark;
-      dc.fillRect(bx-5, mid,   5, 2); dc.fillRect(bx-5, mid-3, 2, 3);
-      dc.fillRect(bx+3, mid+8, 5, 2); dc.fillRect(bx+6, mid+4, 2, 4);
-      const top = by - th;
-      dc.fillRect(bx-5, top+2, 5, 1); dc.fillRect(bx-5, top-4, 1, 6); dc.fillRect(bx-7, top-2, 2, 2);
-      dc.fillRect(bx+3, top+4, 4, 1); dc.fillRect(bx+5, top-3, 1, 7); dc.fillRect(bx+6, top-1, 3, 1);
-      dc.fillRect(bx+1, top-9, 1, 9); dc.fillRect(bx-1, top-5, 1, 3); dc.fillRect(bx+2, top-7, 1, 5);
-      break;
-    }
-
-    case 1: { // ── Broad oak — wide horizontal wings both sides ─────────
-      const th = 40 + (h >> 4 & 0x8);
-      dc.fillStyle = dark;
-      dc.fillRect(bx-6, by-4, 6, 4); dc.fillRect(bx+5, by-3, 5, 3);
-      dc.fillStyle = bark;
-      dc.fillRect(bx-4, by-3, 4, 3); dc.fillRect(bx+5, by-2, 3, 2);
-      dc.fillRect(bx-1, by-th, 5, th);
-      dc.fillStyle = hi;  dc.fillRect(bx-1, by-th, 1, th);
-      dc.fillStyle = dark; dc.fillRect(bx+3, by-th+3, 1, th-3);
-      const lb = by - (th*0.72)|0;
-      dc.fillStyle = bark;
-      dc.fillRect(bx-20, lb, 20, 3);
-      dc.fillRect(bx-20, lb-9, 3, 9); dc.fillRect(bx-24, lb-6, 4, 2);
-      dc.fillRect(bx-14, lb-11, 2, 11); dc.fillRect(bx-17, lb-8, 4, 2);
-      dc.fillStyle = dark; dc.fillRect(bx-19, lb+2, 18, 1);
-      const rb = by - (th*0.55)|0;
-      dc.fillStyle = bark;
-      dc.fillRect(bx+4, rb, 19, 3);
-      dc.fillRect(bx+20, rb-9, 3, 9); dc.fillRect(bx+22, rb-6, 4, 2);
-      dc.fillRect(bx+13, rb-11, 2, 11); dc.fillRect(bx+14, rb-8, 4, 2);
-      dc.fillStyle = dark; dc.fillRect(bx+5, rb+2, 18, 1);
-      const top = by - th;
-      dc.fillStyle = bark;
-      dc.fillRect(bx,   top-7, 2, 7); dc.fillRect(bx+2, top-5, 2, 5);
-      dc.fillRect(bx-2, top-4, 2, 4); dc.fillRect(bx+4, top-3, 2, 3);
-      break;
-    }
-
-    case 2: { // ── Gnarled — leans right, sweeping left branch ──────────
-      const th = 50 + (h >> 4 & 0x8);
-      dc.fillStyle = dark;
-      dc.fillRect(bx-8, by-2, 8, 2); dc.fillRect(bx+5, by-3, 6, 3);
-      dc.fillRect(bx-5, by-5, 3, 3);
-      dc.fillStyle = bark;
-      dc.fillRect(bx-6, by-1, 5, 1); dc.fillRect(bx+5, by-2, 4, 2);
-      dc.fillRect(bx-4, by-4, 2, 3);
-      // Trunk in 3 leaning segments
-      dc.fillStyle = bark;
-      dc.fillRect(bx,   by-(th*0.34)|0, 4, (th*0.34)|0);
-      dc.fillRect(bx+1, by-(th*0.67)|0, 4, (th*0.33)|0);
-      dc.fillRect(bx+2, by-th,          4, (th*0.33)|0);
-      dc.fillStyle = hi;
-      dc.fillRect(bx,   by-(th*0.34)|0, 1, (th*0.34)|0);
-      dc.fillRect(bx+1, by-(th*0.67)|0, 1, (th*0.33)|0);
-      dc.fillRect(bx+2, by-th,          1, (th*0.33)|0);
-      dc.fillStyle = dark; dc.fillRect(bx+1, (by-th*0.4)|0, 3, 5);
-      const lb = by - (th*0.72)|0;
-      dc.fillStyle = bark;
-      dc.fillRect(bx-18, lb+5, 19, 3);
-      dc.fillRect(bx-18, lb-3, 3, 8); dc.fillRect(bx-22, lb,   5, 2);
-      dc.fillRect(bx-12, lb-12, 2, 12); dc.fillRect(bx-15, lb-8, 4, 2);
-      dc.fillRect(bx-9,  lb-16, 2,  6); dc.fillRect(bx-11, lb-13, 3, 2);
-      dc.fillStyle = dark; dc.fillRect(bx-17, lb+7, 17, 1);
-      const rs = by - (th*0.42)|0;
-      dc.fillStyle = bark;
-      dc.fillRect(bx+5, rs, 9, 2); dc.fillRect(bx+12, rs-5, 2, 5); dc.fillRect(bx+13, rs-3, 3, 2);
-      const top = by - th;
-      dc.fillRect(bx+2, top-6, 2, 6); dc.fillRect(bx+4, top-4, 2, 4);
-      dc.fillRect(bx,   top-3, 2, 3); dc.fillRect(bx+5, top-7, 1, 4);
-      break;
-    }
-
-    case 3: { // ── Snag — short thick trunk, lightning-struck top ───────
-      const th = 24 + (h >> 4 & 0xa);
-      dc.fillStyle = dark;
-      dc.fillRect(bx-8, by-5, 8, 5); dc.fillRect(bx+5, by-4, 7, 4);
-      dc.fillStyle = bark;
-      dc.fillRect(bx-6, by-4, 6, 4); dc.fillRect(bx+5, by-3, 5, 3);
-      // Wide trunk (6px)
-      dc.fillRect(bx-1, by-th, 6, th);
-      dc.fillStyle = hi;  dc.fillRect(bx-1, by-th, 1, th);
-      dc.fillStyle = dark; dc.fillRect(bx+4, by-th+3, 1, th-3);
-      // Jagged break at top
-      dc.fillRect(bx,   by-th,   2, 5);
-      dc.fillRect(bx+3, by-th,   2, 7);
-      dc.fillRect(bx+1, by-th+3, 2, 4);
-      // Splinters above break
-      dc.fillStyle = bark;
-      dc.fillRect(bx+2, by-th-7, 1, 7);
-      dc.fillRect(bx-1, by-th-3, 1, 3);
-      dc.fillRect(bx+5, by-th-5, 1, 5);
-      // Left stub
-      const s1 = by - (th*0.72)|0;
-      dc.fillRect(bx-9, s1, 9, 3); dc.fillRect(bx-9, s1-2, 2, 2);
-      dc.fillStyle = dark; dc.fillRect(bx-8, s1+2, 7, 1);
-      // Right stub
-      const s2 = by - (th*0.4)|0;
-      dc.fillStyle = bark;
-      dc.fillRect(bx+5, s2, 8, 3); dc.fillRect(bx+11, s2-2, 2, 2);
-      dc.fillStyle = dark; dc.fillRect(bx+6, s2+2, 6, 1);
-      break;
-    }
-
-    default: { // ── Y-Fork — trunk splits into two angled sub-trunks ────
-      const forkY = by - 14;
-      dc.fillStyle = dark;
-      dc.fillRect(bx-3, by-3, 3, 3); dc.fillRect(bx+4, by-2, 4, 2);
-      dc.fillStyle = bark;
-      dc.fillRect(bx-2, by-2, 2, 2);
-      // Base trunk
-      dc.fillRect(bx, by-14, 4, 14);
-      dc.fillStyle = hi;  dc.fillRect(bx, by-14, 1, 14);
-      dc.fillStyle = dark; dc.fillRect(bx+3, by-11, 1, 11);
-      // Left sub-trunk (3 segments, angling left)
-      dc.fillStyle = bark;
-      dc.fillRect(bx-2,  forkY-14, 3, 14);
-      dc.fillRect(bx-5,  forkY-30, 3, 16);
-      dc.fillRect(bx-8,  forkY-48, 2, 18);
-      dc.fillStyle = hi;
-      dc.fillRect(bx-2, forkY-14, 1, 14);
-      dc.fillRect(bx-5, forkY-30, 1, 16);
-      // Left branch
-      dc.fillStyle = bark;
-      dc.fillRect(bx-16, forkY-22, 11, 2);
-      dc.fillRect(bx-16, forkY-27,  2,  5); dc.fillRect(bx-20, forkY-25, 4, 2);
-      // Left crown
-      const ltop = forkY - 48;
-      dc.fillRect(bx-10, ltop-5, 2, 5); dc.fillRect(bx-8,  ltop-4, 2, 4);
-      dc.fillRect(bx-12, ltop-3, 2, 3);
-      // Right sub-trunk (3 segments, angling right)
-      dc.fillStyle = bark;
-      dc.fillRect(bx+4,  forkY-14, 3, 14);
-      dc.fillRect(bx+7,  forkY-28, 3, 14);
-      dc.fillRect(bx+9,  forkY-42, 2, 14);
-      dc.fillStyle = hi;
-      dc.fillRect(bx+4, forkY-14, 1, 14);
-      dc.fillRect(bx+7, forkY-28, 1, 14);
-      // Right branch
-      dc.fillStyle = bark;
-      dc.fillRect(bx+13, forkY-18, 9, 2);
-      dc.fillRect(bx+20, forkY-23, 2,  5); dc.fillRect(bx+21, forkY-21, 3, 2);
-      // Right crown
-      const rtop = forkY - 42;
-      dc.fillRect(bx+10, rtop-5, 2, 5); dc.fillRect(bx+12, rtop-3, 2, 3);
-      dc.fillRect(bx+8,  rtop-3, 2, 3);
-      break;
-    }
-  }
-}
-
-// ── Wasteland offscreen cache ──────────────────────────────────────────────────
-// Static content (earth, trees, pond tiles) is rendered once to an offscreen canvas
-// and blitted each frame. Only animated bubbles are drawn live.
-let _wlCache = null, _wlCacheCam = null, _wlWaterTiles = [];
-
-function _buildWastelandCache() {
-  if (!_wlCache || _wlCache.width !== c.width || _wlCache.height !== c.height) {
-    _wlCache = document.createElement('canvas');
-    _wlCache.width  = c.width;
-    _wlCache.height = c.height;
-  }
-  _wlCacheCam  = { wx: cam.wx, wy: cam.wy, zoom: cam.zoom };
-  _wlWaterTiles = [];
-
-  const oc = _wlCache.getContext('2d');
-  oc.clearRect(0, 0, _wlCache.width, _wlCache.height);
-  oc.setTransform(
-    cam.zoom * _gameScale * DPR, 0, 0, cam.zoom * _gameScale * DPR,
-    (_gameOx - cam.wx * cam.zoom * _gameScale) * DPR,
-    (_gameOy - cam.wy * cam.zoom * _gameScale) * DPR
-  );
-
-  const viewW = DW / cam.zoom, viewH = CH / cam.zoom;
-  const x0 = Math.floor(cam.wx / TILE) - 1;
-  const y0 = Math.floor(cam.wy / TILE) - 1;
-  const x1 = Math.ceil((cam.wx + viewW) / TILE) + 1;
-  const y1 = Math.ceil((cam.wy + viewH) / TILE) + 1;
-  const DX0 = -3, DX1 = GRID + 2, DY0 = -3, DY1 = GRID + 2;
-  const BASES  = ['#1e1208','#231508','#261a0a','#201005'];
-  const LIGHTS = ['#3a220e','#362010','#3e2812','#2e1c09'];
-  const DARK   = '#130c04';
-  const ROCK   = '#1a1006';
-  const ROCKHI = '#261608';
-
-  oc.lineWidth = 1;
-
-  for (let gy = y0; gy <= y1; gy++) {
-    for (let gx = x0; gx <= x1; gx++) {
-      const px = gx * TILE, py = gy * TILE;
-      const h  = wh(gx, gy);
-      const rv = pondAt(gx, gy);
-      const nearDungeon = gx >= DX0 && gx <= DX1 && gy >= DY0 && gy <= DY1;
-
-      if (rv === 'water') {
-        if (h % 3 === 0) _wlWaterTiles.push({ gx, gy, h });  // 1/3 eligible for bubbles
-        oc.fillStyle = '#090f05';
-        oc.fillRect(px, py, TILE, TILE);
-        oc.fillStyle = '#0c1507';
-        oc.fillRect(px+2, py+2, TILE-4, TILE-4);
-        if (h % 5 === 0) {
-          oc.fillStyle = '#121c08';
-          oc.fillRect(px + (h >> 5 & 0x18), py + (h >> 9 & 0x18), 9, 6);
-        }
-        oc.fillStyle = '#141a07';
-        oc.fillRect(px, py,        TILE, 2);
-        oc.fillRect(px, py+TILE-2, TILE, 2);
-        oc.fillRect(px, py+2,         2, TILE-4);
-        oc.fillRect(px+TILE-2, py+2,  2, TILE-4);
-        continue;
-      }
-
-      if (rv === 'bank') {
-        oc.fillStyle = '#191408';
-        oc.fillRect(px, py, TILE, TILE);
-        oc.fillStyle = '#201a0a';
-        oc.fillRect(px+1, py+1, TILE-2, TILE-2);
-        oc.fillStyle = '#282010';
-        oc.fillRect(px+2, py+2, TILE-4, 2);
-        oc.fillRect(px+2, py+TILE-4, TILE-4, 2);
-        continue;
-      }
-
-      oc.fillStyle = BASES[h % 4];
-      oc.fillRect(px, py, TILE, TILE);
-      if ((h >> 2 & 3) === 0) {
-        oc.fillStyle = LIGHTS[(h >> 4) % 4];
-        oc.fillRect(px + (h >> 13 & 0x1f), py + (h >> 18 & 0x1f),
-                    10 + (h >> 6 & 0xf),   6  + (h >> 10 & 0x7));
-      }
-      if ((h >> 3 & 3) === 0) {
-        oc.strokeStyle = DARK;
-        const crx = px + 4 + (h >> 7 & 0x1c), cry = py + 4 + (h >> 12 & 0x1c);
-        const clen = 8 + (h >> 17 & 0x7), flip = h >> 5 & 1;
-        oc.beginPath(); oc.moveTo(crx, cry); oc.lineTo(crx + clen, cry + (flip ? 3 : -2)); oc.stroke();
-        oc.beginPath(); oc.moveTo(crx + (clen >> 1), cry + (flip ? 1 : -1));
-        oc.lineTo(crx + (clen >> 1) + 4, cry + (flip ? 7 : -6)); oc.stroke();
-      }
-      if ((h >> 1 & 7) === 0) {
-        const rx = px + (h >> 9 & 0x1e), ry = py + (h >> 14 & 0x1e);
-        const rw = 5 + (h >> 19 & 3),    rh = 3 + (h >> 21 & 2);
-        oc.fillStyle = ROCK; oc.fillRect(rx, ry, rw, rh);
-        oc.fillStyle = ROCKHI; oc.fillRect(rx+1, ry, rw-2, 1);
-      }
-      if ((h >> 4 & 5) === 0) {
-        oc.fillStyle = ROCK;
-        oc.fillRect(px + (h >> 8  & 0x1f), py + (h >> 13 & 0x1f), 2, 2);
-        oc.fillRect(px + (h >> 16 & 0x1f), py + (h >> 21 & 0x1f), 2, 1);
-      }
-      if (h % 11 === 0) {
-        const tx = px + (h >> 6 & 0x1e), ty = py + (h >> 11 & 0x1e);
-        oc.fillStyle = '#2e1e08';
-        oc.fillRect(tx,   ty+4, 1, 5); oc.fillRect(tx+2, ty+2, 1, 7); oc.fillRect(tx+4, ty+5, 1, 4);
-        oc.fillStyle = '#3a2810';
-        oc.fillRect(tx,   ty+3, 1, 1); oc.fillRect(tx+2, ty+1, 1, 1); oc.fillRect(tx+4, ty+4, 1, 1);
-      }
-      if (h % 44 === 0 && !nearDungeon) {
-        drawDeadTree(px, py, h, oc);
-      }
-    }
-  }
-}
-
-function drawWasteland() {
-  const now = gNow();
-
-  // Rebuild static cache when camera moves more than half a tile or zoom changes
-  const needRebuild = !_wlCache
-    || _wlCache.width  !== c.width
-    || _wlCache.height !== c.height
-    || cam.zoom        !== _wlCacheCam.zoom
-    || Math.abs(cam.wx - _wlCacheCam.wx) > TILE / 2
-    || Math.abs(cam.wy - _wlCacheCam.wy) > TILE / 2;
-
-  if (needRebuild) _buildWastelandCache();
-
-  // Blit static wasteland — reset to identity so we draw straight to screen coords
-  const dx = (_wlCacheCam.wx - cam.wx) * cam.zoom * _gameScale * DPR;
-  const dy = (_wlCacheCam.wy - cam.wy) * cam.zoom * _gameScale * DPR;
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.drawImage(_wlCache, dx, dy);
-  ctx.restore();
-
-  // Animated bubbles only — bigger circles, ~1/3 of water tiles, shorter visible window
-  for (const { gx, gy, h } of _wlWaterTiles) {
-    const bubPhase = (now * 0.00035 + (h & 0xff) * 0.04) % 1;
-    if (bubPhase >= 0.04) continue;
-    const px = gx * TILE, py = gy * TILE;
-    const bx = px + (h >> 7 & 0x1c) + 4;
-    const by = py + (h >> 11 & 0x1c) + 4;
-    ctx.fillStyle = '#1e2e0e';
-    ctx.beginPath();
-    ctx.arc(bx, by, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#0c1507';
-    ctx.beginPath();
-    ctx.arc(bx + 1, by - 1, 1.5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
 function drawDungeon() {
   const now = gNow();
   for (let gy=0; gy<GRID; gy++) {
@@ -6482,8 +6119,8 @@ function drawInventory() {
   ctx.fillText('X', cx+14, cy+18);
 
   // Tabs
-  const TABS = ['food','traps','minions','dungeon'];
-  const TAB_LABELS = ['FOOD','TRAPS','MINIONS','DUNGEON'];
+  const TABS = ['food','traps','minions','rooms'];
+  const TAB_LABELS = ['FOOD','TRAPS','MINIONS','ROOMS'];
   const tabW = Math.floor((SW-24)/4);
   for (let i=0; i<4; i++) {
     const tx=SX+12+i*(tabW+4), ty=SY+38;
@@ -6868,7 +6505,7 @@ function inventoryClick(mx, my) {
   if (inR(mx,my, cx,cy, 28,28)) { invOpen=false; placeMode=null; return; }
 
   // Tabs
-  const TABS=['food','traps','minions','dungeon'];
+  const TABS=['food','traps','minions','rooms'];
   const tabW=Math.floor((SW-24)/4);
   for (let i=0; i<4; i++) {
     const tx=SX+12+i*(tabW+4), ty=SY+38;
@@ -7002,7 +6639,7 @@ function inventoryClick(mx, my) {
   }
 
   // Dungeon tab
-  if (invTab==='dungeon') {
+  if (invTab==='rooms') {
     let iy = SY + 76;
     iy += 20; // section header
 
@@ -7055,7 +6692,8 @@ function inventoryClick(mx, my) {
     for (const r of extraRooms) {
       const inside = playerInRoom(r);
       const empty  = roomIsEmpty(r);
-      if (!inside && empty) {
+      const corridorCount = worldCorridors.filter(c => c.fromRoomId === r.id || c.toRoomId === r.id).length;
+      if (!inside && empty && corridorCount < 2) {
         const bx=SX+SW-80, by=iy+2;
         if (inR(mx,smy, bx,by, 68,24)) {
           removeRoomFromWorld(r);
@@ -7122,13 +6760,13 @@ function updateMinions(dt) {
         const gfSpd = MINION_TYPES.goblinFarmer.statsAtLevel(m.level).speed;
         const gfnx = (gfhx/gfhd)*gfSpd*dt, gfny = (gfhy/gfhd)*gfSpd*dt;
         if (canMoveAdv(m.x+gfnx, m.y)) m.x += gfnx;
-        if (canMoveAdv(m.x, m.y+gfny) && m.y+gfny >= TILE) m.y += gfny;
+        if (canMoveAdv(m.x, m.y+gfny)) m.y += gfny;
       }
       // Flee from adventurers during combat
       if (gameState === 'combat') {
         let nearestAdv = null, nearestAdvDist = TILE * 5;
         for (const a of adventurers) {
-          if (!a.alive || !a.enteredDungeon) continue;
+          if (!a.alive) continue;
           const d = Math.hypot((a.x+16)-(m.x+16), (a.y+16)-(m.y+16));
           if (d < nearestAdvDist) { nearestAdvDist = d; nearestAdv = a; }
         }
@@ -7138,7 +6776,7 @@ function updateMinions(dt) {
           const gfSpd = MINION_TYPES.goblinFarmer.statsAtLevel(m.level).speed;
           const fnx = (fdx/flen)*gfSpd*dt, fny = (fdy/flen)*gfSpd*dt;
           if (canMoveAdv(m.x+fnx, m.y)) m.x += fnx;
-          if (canMoveAdv(m.x, m.y+fny) && m.y+fny >= TILE) m.y += fny;
+          if (canMoveAdv(m.x, m.y+fny)) m.y += fny;
         }
       }
       m.target = null;
@@ -7153,7 +6791,7 @@ function updateMinions(dt) {
         const spd = MINION_TYPES[m.type].statsAtLevel(m.level).speed;
         const nx = (hdx/hdist)*spd*dt, ny = (hdy/hdist)*spd*dt;
         if (canMoveAdv(m.x+nx, m.y)) m.x += nx;
-        if (canMoveAdv(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+        if (canMoveAdv(m.x, m.y+ny)) m.y += ny;
       }
       m.target = null;
       continue;
@@ -7169,7 +6807,7 @@ function updateMinions(dt) {
       if (m.mimicForm === 'chest') {
         // Lure adventurers within lureRange that aren't aggro'd or already lured
         for (const a of adventurers) {
-          if (!a.alive || !a.enteredDungeon) continue;
+          if (!a.alive) continue;
           if (a.luredByMimic || a.aggroTimer > 0 || a.fleeTimer > 0) continue;
           const d = Math.hypot((a.x+16)-(m.x+16), (a.y+16)-(m.y+16));
           if (d <= stats.lureRange) {
@@ -7203,7 +6841,7 @@ function updateMinions(dt) {
         if (!target) {
           let bd = stats.detectRng;
           for (const a of adventurers) {
-            if (!a.alive || !a.enteredDungeon) continue;
+            if (!a.alive) continue;
             const d = Math.hypot((a.x+16)-(m.x+16), (a.y+16)-(m.y+16));
             if (d < bd) { bd = d; target = a; }
           }
@@ -7215,7 +6853,7 @@ function updateMinions(dt) {
           if (dist > 36) {
             const nx = (dx/dist)*stats.speed*mSpeedMult*dt, ny = (dy/dist)*stats.speed*mSpeedMult*dt;
             if (canMoveAdv(m.x+nx, m.y)) m.x += nx;
-            if (canMoveAdv(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+            if (canMoveAdv(m.x, m.y+ny)) m.y += ny;
           }
           if (dist <= 44 && m.atkCd <= 0) {
             target.hp -= stats.atk;
@@ -7242,7 +6880,7 @@ function updateMinions(dt) {
           if (hdist > 2) {
             const nx = (hdx/hdist)*stats.speed*mSpeedMult*dt, ny = (hdy/hdist)*stats.speed*mSpeedMult*dt;
             if (canMoveAdv(m.x+nx, m.y)) m.x += nx;
-            if (canMoveAdv(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+            if (canMoveAdv(m.x, m.y+ny)) m.y += ny;
           }
         }
       }
@@ -7255,7 +6893,7 @@ function updateMinions(dt) {
     const mDetectRng = m.type === 'giantSpider' ? Math.max(stats.detectRng, TILE * 8) : stats.detectRng;
     let bestAdv = null, bestDist = mDetectRng;
     for (const a of adventurers) {
-      if (!a.alive || !a.enteredDungeon) continue;
+      if (!a.alive) continue;
       const d = Math.hypot((a.x+16)-mcx, (a.y+16)-mcy);
       if (d < bestDist) { bestDist = d; bestAdv = a; }
     }
@@ -7297,13 +6935,13 @@ function updateMinions(dt) {
           // Priority 3: Move straight toward target
           const nx = (dx/dist)*stats.speed*mSpeedMult*dt, ny = (dy/dist)*stats.speed*mSpeedMult*dt;
           if (canMoveAdv2x2(m.x+nx, m.y)) m.x += nx;
-          if (canMoveAdv2x2(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+          if (canMoveAdv2x2(m.x, m.y+ny)) m.y += ny;
         }
       } else if (m.type === 'goblinWarrior') {
         if (dist > 36) {
           const nx = (dx/dist)*stats.speed*mSpeedMult*dt, ny = (dy/dist)*stats.speed*mSpeedMult*dt;
           if (canMoveAdv(m.x+nx, m.y)) m.x += nx;
-          if (canMoveAdv(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+          if (canMoveAdv(m.x, m.y+ny)) m.y += ny;
         }
         if (dist <= 44 && m.atkCd <= 0) {
           bestAdv.hp -= stats.atk;
@@ -7324,7 +6962,7 @@ function updateMinions(dt) {
         if (dist <= TILE && m.leapCd <= 0) {
           const awayX = -(dx/dist) * TILE * 2, awayY = -(dy/dist) * TILE * 2;
           const lnx = m.x + awayX, lny = m.y + awayY;
-          if (canMoveAdv(lnx, lny) && lny >= TILE) { m.x = lnx; m.y = lny; }
+          if (canMoveAdv(lnx, lny)) { m.x = lnx; m.y = lny; }
           m.leapCd = 1.5;
           burst(m.x+16, m.y+16, ['#88ff44','#44cc22'], 4);
         }
@@ -7332,7 +6970,7 @@ function updateMinions(dt) {
         if (dist < TILE * 3) {
           const nx = -(dx/dist)*stats.speed*mSpeedMult*dt, ny = -(dy/dist)*stats.speed*mSpeedMult*dt;
           if (canMoveAdv(m.x+nx, m.y)) m.x += nx;
-          if (canMoveAdv(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+          if (canMoveAdv(m.x, m.y+ny)) m.y += ny;
         }
         // Shoot poison arrow
         if (dist <= stats.detectRng && m.arrowCd <= 0) {
@@ -7350,7 +6988,7 @@ function updateMinions(dt) {
         if (dist < TILE * 3) {
           const nx = -(dx/dist)*stats.speed*mSpeedMult*dt, ny = -(dy/dist)*stats.speed*mSpeedMult*dt;
           if (canMoveAdv(m.x+nx, m.y)) m.x += nx;
-          if (canMoveAdv(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+          if (canMoveAdv(m.x, m.y+ny)) m.y += ny;
         }
         // Shoot firebolt
         if (dist <= stats.detectRng && m.fireCd <= 0) {
@@ -7368,7 +7006,7 @@ function updateMinions(dt) {
         if (dist > 36) {
           const nx = (dx/dist)*stats.speed*mSpeedMult*dt, ny = (dy/dist)*stats.speed*mSpeedMult*dt;
           if (canMoveAdv(m.x+nx, m.y)) m.x += nx;
-          if (canMoveAdv(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+          if (canMoveAdv(m.x, m.y+ny)) m.y += ny;
         }
         if (dist <= 44 && m.atkCd <= 0) {
           bestAdv.hp -= stats.atk;
@@ -7393,7 +7031,7 @@ function updateMinions(dt) {
         const nx = (hdx/hdist)*stats.speed*mSpeedMult*dt, ny = (hdy/hdist)*stats.speed*mSpeedMult*dt;
         const moveFn = m.type === 'giantSpider' ? canMoveAdv2x2 : canMoveAdv;
         if (moveFn(m.x+nx, m.y)) m.x += nx;
-        if (moveFn(m.x, m.y+ny) && m.y+ny >= TILE) m.y += ny;
+        if (moveFn(m.x, m.y+ny)) m.y += ny;
       }
     }
   }
@@ -7823,6 +7461,258 @@ function drawInventoryMinions() {
   if (minionTip) drawMinionTooltip(minionTip.key, minionTip.level);
 }
 
+// ── Mini dungeon grid renderer (used by dungeon tooltips) ────
+function drawMiniDungeonGrid(x, y, w, h, tileGrid, cols, rows) {
+  const ts = Math.min(w / cols, h / rows);
+  const ox = x + (w - ts * cols) / 2;
+  const oy = y + (h - ts * rows) / 2;
+  ctx.fillStyle = '#1c1830';
+  ctx.fillRect(ox, oy, ts * cols, ts * rows);
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const t = tileGrid[row][col];
+      const px = ox + col * ts, py = oy + row * ts;
+      if (t === T_WALL) {
+        ctx.fillStyle = '#110b1f'; ctx.fillRect(px, py, ts, ts);
+        ctx.fillStyle = '#231940'; ctx.fillRect(px + ts*0.07, py + ts*0.07, ts*0.86, ts*0.86);
+        ctx.fillStyle = '#342558';
+        const ev = (col + row) % 2 === 0;
+        ctx.fillRect(px + ts*0.08, py + (ev ? ts*0.15 : ts*0.55), ts*0.45, ts*0.3);
+        ctx.fillRect(px + ts*0.55, py + (ev ? ts*0.55 : ts*0.15), ts*0.35, ts*0.3);
+      } else {
+        ctx.fillStyle = FC[((col*3 + row*7) % 3 + 3) % 3]; ctx.fillRect(px, py, ts, ts);
+        ctx.strokeStyle = '#2a2240'; ctx.lineWidth = 0.4; ctx.strokeRect(px, py, ts, ts);
+      }
+    }
+  }
+}
+
+// ── Dungeon structure tooltip (shared by shop + inventory) ────
+function drawDungeonTooltip(key) {
+  const DUNGEON_TT = {
+    corridor: {
+      col: '#44aacc',
+      name: 'CORRIDOR',
+      badge: 'EXPANSION',
+      badgeBg: '#001a22', badgeFg: '#44aacc',
+      desc: 'A 5-tile wide passage that expands your dungeon.',
+      tips: [
+        'Place by clicking any outer wall of your dungeon.',
+        'Connects the main dungeon to new dungeon rooms.',
+        'Minions and traps can be placed inside.',
+        'Can only be removed if empty and no room is attached.',
+      ],
+    },
+    dungeonRoom: {
+      col: '#7755cc',
+      name: 'DUNGEON ROOM',
+      badge: 'NEW ROOM',
+      badgeBg: '#0e0022', badgeFg: '#7755cc',
+      desc: 'A 15x15 room placed at the far end of a corridor.',
+      tips: [
+        'Must be placed at the open end of a corridor.',
+        'Large space for traps, minions, and dungeon hearts.',
+        'Cannot be removed with 2 or more corridors attached.',
+        'Floor and walls match your main dungeon style.',
+      ],
+    },
+  };
+  const cfg = DUNGEON_TT[key];
+  if (!cfg) return;
+  const col = cfg.col;
+  const TTX = SX + SW + 8;
+  const TTW = CW - TTX - 8;
+  const TTY = SY - 10;
+  const TTH = SH + 20;
+  const mid = TTX + TTW / 2;
+  const PAD = 10;
+
+  ctx.fillStyle = '#040209';
+  ctx.fillRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col; ctx.lineWidth = 2;
+  ctx.strokeRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col+'33'; ctx.lineWidth = 1;
+  ctx.strokeRect(TTX+3, TTY+3, TTW-6, TTH-6);
+  ctx.fillStyle = col+'22';
+  ctx.fillRect(TTX+2, TTY+2, TTW-4, 46);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(TTX+4, TTY+4, TTW-8, TTH-8); ctx.clip();
+
+  // Icon
+  const iconX = TTX + PAD, iconY = TTY + 5;
+  const iconW = TTW - PAD*2, iconH = 50;
+  if (key === 'corridor') {
+    // E/W corridor: 8 cols × 5 rows, top and bottom rows are walls
+    const cgrid = Array.from({length: 5}, (_, r) =>
+      Array.from({length: 8}, () => (r === 0 || r === 4) ? T_WALL : T_FLOOR)
+    );
+    drawMiniDungeonGrid(iconX, iconY, iconW, iconH, cgrid, 8, 5);
+  } else {
+    // Dungeon room: 15×15 with wall border and floor interior
+    const rgrid = Array.from({length: 15}, (_, r) =>
+      Array.from({length: 15}, (_, c) =>
+        (r === 0 || r === 14 || c === 0 || c === 14) ? T_WALL : T_FLOOR
+      )
+    );
+    drawMiniDungeonGrid(iconX, iconY, iconW, iconH, rgrid, 15, 15);
+  }
+
+  // Name
+  let cy = TTY + 63;
+  ctx.font = '7px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillStyle = col;
+  ctx.fillText(cfg.name, mid, cy); cy += 14;
+
+  // Badge
+  const bw = 80, bh = 13;
+  ctx.fillStyle = cfg.badgeBg; ctx.fillRect(mid-bw/2, cy-10, bw, bh);
+  ctx.strokeStyle = cfg.badgeFg; ctx.lineWidth = 1; ctx.strokeRect(mid-bw/2, cy-10, bw, bh);
+  ctx.font = '5px "Press Start 2P"'; ctx.fillStyle = cfg.badgeFg;
+  ctx.fillText(cfg.badge, mid, cy-1); cy += 8;
+
+  // Divider
+  ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
+
+  // Description (word-wrapped)
+  ctx.textAlign = 'left'; ctx.font = '5px "Press Start 2P"'; ctx.fillStyle = '#aabbcc';
+  let dline = '';
+  for (const w of cfg.desc.split(' ')) {
+    const test = dline + (dline?' ':'')+w;
+    if (ctx.measureText(test).width > TTW - PAD*2) { ctx.fillText(dline, TTX+PAD, cy); cy += 9; dline = w; }
+    else dline = test;
+  }
+  if (dline) { ctx.fillText(dline, TTX+PAD, cy); cy += 9; }
+  cy += 4;
+
+  // Divider
+  ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 9;
+
+  // Tips
+  ctx.font = '5px "Press Start 2P"';
+  for (const tip of cfg.tips) {
+    ctx.fillStyle = col; ctx.fillText('>', TTX+PAD, cy);
+    ctx.fillStyle = '#aabbcc';
+    const tipX = TTX+PAD+10, tipW = TTW - PAD*2 - 10;
+    let tline = '';
+    for (const w of tip.split(' ')) {
+      const test = tline + (tline?' ':'')+w;
+      if (ctx.measureText(test).width > tipW) { ctx.fillText(tline, tipX, cy); cy += 9; tline = w; }
+      else tline = test;
+    }
+    if (tline) { ctx.fillText(tline, tipX, cy); cy += 9; }
+    cy += 2;
+  }
+
+  ctx.restore();
+}
+
+// ── Placed corridor/room tooltip ──────────────────────────────
+function drawPlacedDungeonTooltip(info) {
+  const col = info.type === 'corridor' ? '#44aacc' : '#7755cc';
+  const TTX = SX + SW + 8;
+  const TTW = CW - TTX - 8;
+  const TTY = SY - 10;
+  const TTH = SH + 20;
+  const mid = TTX + TTW / 2;
+  const PAD = 10;
+
+  ctx.fillStyle = '#040209'; ctx.fillRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.strokeRect(TTX, TTY, TTW, TTH);
+  ctx.strokeStyle = col+'33'; ctx.lineWidth = 1; ctx.strokeRect(TTX+3, TTY+3, TTW-6, TTH-6);
+  ctx.fillStyle = col+'22'; ctx.fillRect(TTX+2, TTY+2, TTW-4, 58);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(TTX+4, TTY+4, TTW-8, TTH-8); ctx.clip();
+
+  // Icon
+  const iconX = TTX+PAD, iconY = TTY+5, iconW = TTW-PAD*2, iconH = 50;
+  if (info.type === 'corridor') {
+    const cgrid = Array.from({length: 5}, (_, r) =>
+      Array.from({length: 8}, () => (r === 0 || r === 4) ? T_WALL : T_FLOOR)
+    );
+    drawMiniDungeonGrid(iconX, iconY, iconW, iconH, cgrid, 8, 5);
+  } else {
+    const rgrid = Array.from({length: 15}, (_, r) =>
+      Array.from({length: 15}, (_, c) =>
+        (r === 0 || r === 14 || c === 0 || c === 14) ? T_WALL : T_FLOOR
+      )
+    );
+    drawMiniDungeonGrid(iconX, iconY, iconW, iconH, rgrid, 15, 15);
+  }
+
+  // Title + sub-info
+  let cy = TTY + 63;
+  ctx.font = '6px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillStyle = col;
+  ctx.fillText(info.type === 'corridor' ? 'CORRIDOR #'+info.id : 'DUNGEON ROOM #'+info.id, mid, cy); cy += 12;
+  ctx.font = '5px "Press Start 2P"'; ctx.fillStyle = '#668899';
+  ctx.fillText(info.type === 'corridor' ? 'Direction: '+info.dir.toUpperCase() : 'Position: ('+info.wx+', '+info.wy+')', mid, cy); cy += 10;
+
+  // Divider
+  ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 10;
+
+  // Status rows
+  ctx.textAlign = 'left'; ctx.font = '5px "Press Start 2P"';
+  const lx = TTX+PAD, vx = TTX+PAD+90;
+  function sRow(label, good, val) {
+    ctx.fillStyle = '#7799aa'; ctx.fillText(label, lx, cy);
+    ctx.fillStyle = good ? '#55dd88' : '#ff7755'; ctx.fillText(val, vx, cy);
+    cy += 11;
+  }
+  if (info.type === 'corridor') {
+    sRow('Room attached:', !info.connected, info.connected ? 'YES' : 'None');
+    sRow('Items inside:', !info.hasItems, info.hasItems ? 'YES' : 'No');
+    sRow('Player on it:', !info.onIt, info.onIt ? 'YES' : 'No');
+  } else {
+    sRow('Corridors:', info.corridorCount < 2, info.corridorCount+' / 2');
+    sRow('Contents:', info.empty, info.empty ? 'Empty' : 'Has items');
+    sRow('Player:', !info.inside, info.inside ? 'Inside' : 'Outside');
+  }
+  cy += 3;
+
+  // Divider
+  ctx.fillStyle = col+'55'; ctx.fillRect(TTX+PAD, cy, TTW-PAD*2, 1); cy += 10;
+
+  // Pickup status badge
+  ctx.textAlign = 'center'; ctx.font = '6px "Press Start 2P"';
+  if (info.canRemove) {
+    ctx.fillStyle = '#003318'; ctx.fillRect(TTX+PAD, cy-10, TTW-PAD*2, 18);
+    ctx.strokeStyle = '#44ff88'; ctx.lineWidth = 1; ctx.strokeRect(TTX+PAD, cy-10, TTW-PAD*2, 18);
+    ctx.fillStyle = '#44ff88'; ctx.fillText('CAN PICK UP', mid, cy+2);
+  } else {
+    ctx.fillStyle = '#220008'; ctx.fillRect(TTX+PAD, cy-10, TTW-PAD*2, 18);
+    ctx.strokeStyle = '#ff4455'; ctx.lineWidth = 1; ctx.strokeRect(TTX+PAD, cy-10, TTW-PAD*2, 18);
+    ctx.fillStyle = '#ff4455'; ctx.fillText('CANNOT PICK UP', mid, cy+2);
+  }
+  cy += 22;
+
+  // Reasons why not
+  if (!info.canRemove) {
+    const reasons = [];
+    if (info.type === 'corridor') {
+      if (info.connected) reasons.push('Remove the attached room first.');
+      if (info.hasItems) reasons.push('Clear all traps and minions inside.');
+      if (info.onIt) reasons.push('Move off the corridor first.');
+    } else {
+      if (info.corridorCount >= 2) reasons.push('Disconnect one corridor first.');
+      if (!info.empty) reasons.push('Clear all traps and minions inside.');
+      if (info.inside) reasons.push('Move outside the room first.');
+    }
+    ctx.textAlign = 'left'; ctx.font = '5px "Press Start 2P"'; ctx.fillStyle = '#cc7766';
+    for (const r of reasons) {
+      let line = '';
+      for (const w of r.split(' ')) {
+        const test = line+(line?' ':'')+w;
+        if (ctx.measureText(test).width > TTW-PAD*2) { ctx.fillText(line, TTX+PAD, cy); cy += 9; line = w; }
+        else line = test;
+      }
+      if (line) { ctx.fillText(line, TTX+PAD, cy); cy += 9; }
+      cy += 2;
+    }
+  }
+
+  ctx.restore();
+}
+
 // ── Inventory: Dungeon tab ─────────────────────────────────────
 function drawInventoryDungeon() {
   const col = '#44aacc';
@@ -7832,6 +7722,8 @@ function drawInventoryDungeon() {
   _totalH += 9 + 18 + (extraRooms.length === 0 ? 14 : extraRooms.length * 32);
   invScrollY = Math.max(0, Math.min(Math.max(0, _totalH - INV_VIEW_H), invScrollY));
   const smy = (mouse.y >= SY+70 && mouse.y <= SY+SH) ? mouse.y + invScrollY : -9999;
+  let dungeonInvTipKey = null;
+  let placedDungeonTip = null;
   ctx.save();
   ctx.beginPath(); ctx.rect(SX+8, SY+70, SW-16, INV_VIEW_H); ctx.clip();
   ctx.translate(0, -invScrollY);
@@ -7843,6 +7735,7 @@ function drawInventoryDungeon() {
     const active = placeMode === 'corridor';
     const cnt = corridorInventory;
     const iHov = inR(mouse.x,smy, SX+8,iy, SW-16,36);
+    if (iHov) dungeonInvTipKey = 'corridor';
     ctx.fillStyle = iHov?'#0a1820':'#060e14'; ctx.fillRect(SX+8,iy,SW-16,36);
     ctx.strokeStyle = active?'#44aacc':'#1a3040'; ctx.lineWidth = active?2:1;
     ctx.strokeRect(SX+8,iy,SW-16,36);
@@ -7865,6 +7758,7 @@ function drawInventoryDungeon() {
     const active = placeMode === 'dungeonRoom';
     const cnt = dungeonRoomInventory;
     const iHov = inR(mouse.x,smy, SX+8,iy, SW-16,36);
+    if (iHov) dungeonInvTipKey = 'dungeonRoom';
     ctx.fillStyle = iHov?'#0a1820':'#060e14'; ctx.fillRect(SX+8,iy,SW-16,36);
     ctx.strokeStyle = active?'#44aacc':'#1a3040'; ctx.lineWidth = active?2:1;
     ctx.strokeRect(SX+8,iy,SW-16,36);
@@ -7895,6 +7789,7 @@ function drawInventoryDungeon() {
       const hasItems = !corridorIsEmpty(c);
       const canRemove = !connected && !onIt && !hasItems;
       const iHov = inR(mouse.x,smy, SX+8,iy, SW-16,28);
+      if (iHov) placedDungeonTip = { type: 'corridor', id: c.id, dir: c.dir, connected, onIt, hasItems, canRemove };
       ctx.fillStyle = iHov?'#0a1820':'#060e14'; ctx.fillRect(SX+8,iy,SW-16,28);
       ctx.strokeStyle = '#1a3040'; ctx.lineWidth=1; ctx.strokeRect(SX+8,iy,SW-16,28);
       ctx.fillStyle = '#88ccee'; ctx.font = '5px "Press Start 2P"';
@@ -7922,15 +7817,17 @@ function drawInventoryDungeon() {
     for (const r of extraRooms) {
       const inside = playerInRoom(r);
       const empty  = roomIsEmpty(r);
-      const canRemove = !inside && empty;
+      const corridorCount = worldCorridors.filter(c => c.fromRoomId === r.id || c.toRoomId === r.id).length;
+      const canRemove = !inside && empty && corridorCount < 2;
       const iHov = inR(mouse.x,smy, SX+8,iy, SW-16,28);
+      if (iHov) placedDungeonTip = { type: 'room', id: r.id, wx: r.wx, wy: r.wy, inside, empty, corridorCount, canRemove };
       ctx.fillStyle = iHov?'#0a1820':'#060e14'; ctx.fillRect(SX+8,iy,SW-16,28);
       ctx.strokeStyle = '#1a3040'; ctx.lineWidth=1; ctx.strokeRect(SX+8,iy,SW-16,28);
       ctx.fillStyle = '#88ccee'; ctx.font = '5px "Press Start 2P"';
       ctx.fillText('Room #'+r.id+'  ('+r.wx+','+r.wy+')', SX+14, iy+12);
       ctx.fillStyle = canRemove?'#668899':(inside?'#886622':'#664444');
       ctx.font = '4px "Press Start 2P"';
-      const reason = inside?'You are inside':'Room not empty';
+      const reason = inside?'You are inside':corridorCount >= 2?'2+ corridors attached':'Room not empty';
       ctx.fillText(canRemove?'Empty — can remove':reason, SX+14, iy+22);
       if (canRemove) {
         const bx = SX+SW-80, by = iy+2;
@@ -7951,6 +7848,8 @@ function drawInventoryDungeon() {
     ctx.fillStyle='#1a3040'; ctx.fillRect(SX+SW-8,SY+70+2,5,trackH);
     ctx.fillStyle='#44aacc'; ctx.fillRect(SX+SW-8,thumbY,5,thumbH);
   }
+  if (dungeonInvTipKey) drawDungeonTooltip(dungeonInvTipKey);
+  if (placedDungeonTip) drawPlacedDungeonTooltip(placedDungeonTip);
 }
 
 function drawShop() {
@@ -7969,7 +7868,7 @@ function drawShop() {
   ctx.fillText('X', cx+14, cy+18);
   // Tabs
   const TAB_W = 75, TAB_GAP = 4;
-  const tabs = [['food','FOOD'],['traps','TRAPS'],['minions','MNNS'],['dungeon','DNGN']];
+  const tabs = [['food','FOOD'],['traps','TRAPS'],['minions','MNNS'],['rooms','ROOMS']];
   for (let i=0; i<4; i++) {
     const tx=SX+12+i*(TAB_W+TAB_GAP), ty=SY+40;
     const active=shopTab===tabs[i][0];
@@ -7996,12 +7895,14 @@ function drawShop() {
   let iy = SY + 76;
   let minionTipKey = null;
   let trapTipKey = null;
+  let dungeonTipKey = null;
   for (const item of items) {
     const hasFood = item.food !== undefined;
     const rowH = hasFood ? 94 : 80;
     const iHov=inR(mouse.x,smy, SX+8,iy, SW-16,rowH);
     if (iHov && (shopTab === 'minions' || (shopTab === 'food' && item.type === 'minion')) && item.key) minionTipKey = item.key;
     if (iHov && shopTab === 'traps' && item.type === 'trap') trapTipKey = item.key;
+    if (iHov && shopTab === 'rooms') dungeonTipKey = item.key;
     ctx.fillStyle=iHov?'#1a1030':'#120820'; ctx.fillRect(SX+8,iy,SW-16,rowH);
     ctx.strokeStyle='#2a1848'; ctx.lineWidth=1; ctx.strokeRect(SX+8,iy,SW-16,rowH);
     const paysFood = item.type === 'minion';
@@ -8045,8 +7946,9 @@ function drawShop() {
     ctx.fillStyle='#1a1030'; ctx.fillRect(SX+SW-8, SY+70+2, 5, trackH);
     ctx.fillStyle='#7755cc'; ctx.fillRect(SX+SW-8, thumbY, 5, thumbH);
   }
-  if (minionTipKey) drawMinionTooltip(minionTipKey, 1);
-  if (trapTipKey)   drawTrapTooltip(trapTipKey, 1);
+  if (minionTipKey)   drawMinionTooltip(minionTipKey, 1);
+  if (trapTipKey)     drawTrapTooltip(trapTipKey, 1);
+  if (dungeonTipKey)  drawDungeonTooltip(dungeonTipKey);
 }
 
 // ── Skill bar HUD ─────────────────────────────────────────────
